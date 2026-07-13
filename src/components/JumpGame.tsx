@@ -402,6 +402,11 @@ export default function JumpGame() {
           velocity = 0;
           jumping = false;
           airJumpsUsed = 0;
+          rotation = rotationTarget;
+        }
+
+        if (jumping) {
+          rotation += (rotationTarget - rotation) * 0.18;
         }
 
         for (const s of level.spikes) {
