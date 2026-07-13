@@ -438,8 +438,12 @@ export default function JumpGame() {
       ctx.fillStyle = "white";
       ctx.fillRect(0, 250, 800, 5);
 
+      ctx.save();
+      ctx.translate(109, 239 - playerY);
+      ctx.rotate((rotation * Math.PI) / 180);
       ctx.fillStyle = "cyan";
-      ctx.fillRect(100, 230 - playerY, 18, 18);
+      ctx.fillRect(-9, -9, 18, 18);
+      ctx.restore();
 
       for (const s of level.spikes) {
         const screenX = s.x - x;
