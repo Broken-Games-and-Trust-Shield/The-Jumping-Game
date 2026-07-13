@@ -288,7 +288,7 @@ export default function JumpGame() {
     }
 
     function jump() {
-      if (dead || won || gameComplete) return;
+      if (dead || won || gameComplete || doubleJumpUnlocked) return;
 
       if (!jumping) {
         velocity = jumpPower;
