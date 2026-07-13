@@ -57,6 +57,7 @@ export default function JumpGame() {
     let challengeOffered = false;
     let challengeMode = false;
     let challengeComplete = false;
+    let doubleJumpUnlocked = false;
 
     const sounds = [deathSound, xpSound, levelUpSound];
 
