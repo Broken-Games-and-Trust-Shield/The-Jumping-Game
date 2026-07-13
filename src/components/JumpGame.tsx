@@ -386,7 +386,7 @@ export default function JumpGame() {
 
       const level = levels[levelIndex];
 
-      if (!dead && !won && !gameComplete) {
+      if (!dead && !won && !gameComplete && !doubleJumpUnlocked) {
         x += level.speed;
         velocity += gravity;
         playerY += velocity;
