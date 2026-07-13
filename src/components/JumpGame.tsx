@@ -57,6 +57,7 @@ export default function JumpGame() {
     let challengeOffered = false;
     let challengeMode = false;
     let challengeComplete = false;
+    let doubleJumpUnlocked = false;
 
     const sounds = [deathSound, xpSound, levelUpSound];
 
@@ -87,6 +88,7 @@ export default function JumpGame() {
       challengeOffered = false;
       challengeMode = false;
       challengeComplete = false;
+      doubleJumpUnlocked = false;
       x = 0;
       velocity = 0;
       playerY = 0;
@@ -240,6 +242,7 @@ export default function JumpGame() {
       challengeOffered = false;
       challengeMode = false;
       challengeComplete = false;
+      doubleJumpUnlocked = false;
       x = 0;
       velocity = 0;
       playerY = 0;
@@ -285,7 +288,7 @@ export default function JumpGame() {
     }
 
     function jump() {
-      if (dead || won || gameComplete) return;
+      if (dead || won || gameComplete || doubleJumpUnlocked) return;
 
       if (!jumping) {
         velocity = jumpPower;
@@ -299,7 +302,17 @@ export default function JumpGame() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") jump();
+      if (e.code !== "Space") return;
+      if (doubleJumpUnlocked) {
+        doubleJumpUnlocked = false;
+        challengeMode = true;
+        gameComplete = false;
+        levelIndex = 5;
+        currentDeaths = 0;
+        resetLevel();
+        return;
+      }
+      jump();
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -330,6 +343,16 @@ export default function JumpGame() {
         return;
       }
 
+      if (doubleJumpUnlocked) {
+        doubleJumpUnlocked = false;
+        challengeMode = true;
+        gameComplete = false;
+        levelIndex = 5;
+        currentDeaths = 0;
+        resetLevel();
+        return;
+      }
+
       if (gameComplete && challengeOffered) {
         if (
           clickX >= challengeBtn.x &&
@@ -337,12 +360,9 @@ export default function JumpGame() {
           clickY >= challengeBtn.y &&
           clickY <= challengeBtn.y + challengeBtn.height
         ) {
-          challengeOffered = false;
-          challengeMode = true;
+          doubleJumpUnlocked = true;
           gameComplete = false;
-          levelIndex = 5;
-          currentDeaths = 0;
-          resetLevel();
+          challengeOffered = false;
           return;
         }
         fullReset();
@@ -366,7 +386,7 @@ export default function JumpGame() {
 
       const level = levels[levelIndex];
 
-      if (!dead && !won && !gameComplete) {
+      if (!dead && !won && !gameComplete && !doubleJumpUnlocked) {
         x += level.speed;
         velocity += gravity;
         playerY += velocity;
@@ -440,6 +460,19 @@ export default function JumpGame() {
 
       ctx.font = "bold 18px Arial";
       ctx.fillText(muted ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
+
+      if (doubleJumpUnlocked) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "gold";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Double Jump Unlocked! 😎", 400, 120);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText("- click to continue -", 400, 165);
+        ctx.textAlign = "left";
+      }
 
       if (!gameComplete && won) {
         ctx.fillStyle = "white";
