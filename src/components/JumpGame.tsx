@@ -333,6 +333,16 @@ export default function JumpGame() {
         return;
       }
 
+      if (doubleJumpUnlocked) {
+        doubleJumpUnlocked = false;
+        challengeMode = true;
+        gameComplete = false;
+        levelIndex = 5;
+        currentDeaths = 0;
+        resetLevel();
+        return;
+      }
+
       if (gameComplete && challengeOffered) {
         if (
           clickX >= challengeBtn.x &&
@@ -340,12 +350,9 @@ export default function JumpGame() {
           clickY >= challengeBtn.y &&
           clickY <= challengeBtn.y + challengeBtn.height
         ) {
-          challengeOffered = false;
-          challengeMode = true;
+          doubleJumpUnlocked = true;
           gameComplete = false;
-          levelIndex = 5;
-          currentDeaths = 0;
-          resetLevel();
+          challengeOffered = false;
           return;
         }
         fullReset();
