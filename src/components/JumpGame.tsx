@@ -302,7 +302,17 @@ export default function JumpGame() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") jump();
+      if (e.code !== "Space") return;
+      if (doubleJumpUnlocked) {
+        doubleJumpUnlocked = false;
+        challengeMode = true;
+        gameComplete = false;
+        levelIndex = 5;
+        currentDeaths = 0;
+        resetLevel();
+        return;
+      }
+      jump();
     };
     window.addEventListener("keydown", handleKeyDown);
 
