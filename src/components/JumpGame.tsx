@@ -461,6 +461,19 @@ export default function JumpGame() {
       ctx.font = "bold 18px Arial";
       ctx.fillText(muted ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
 
+      if (doubleJumpUnlocked) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "gold";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Double Jump Unlocked! 😎", 400, 120);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText("- click to continue -", 400, 165);
+        ctx.textAlign = "left";
+      }
+
       if (!gameComplete && won) {
         ctx.fillStyle = "white";
         ctx.font = "bold 20px Arial";
