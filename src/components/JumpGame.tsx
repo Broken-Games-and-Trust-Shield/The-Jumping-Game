@@ -232,6 +232,8 @@ export default function JumpGame() {
       airJumpsUsed = 0;
       won = false;
       jumpCount = 0;
+      rotation = 0;
+      rotationTarget = 0;
     }
 
     function fullReset() {
