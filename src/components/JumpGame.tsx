@@ -45,6 +45,8 @@ export default function JumpGame() {
     let playerY = 0;
     let velocity = 0;
     let x = 0;
+    let rotation = 0;
+    let rotationTarget = 0;
 
     let dead = false;
     let jumping = false;
