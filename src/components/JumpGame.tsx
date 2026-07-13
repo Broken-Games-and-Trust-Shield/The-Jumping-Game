@@ -298,10 +298,12 @@ export default function JumpGame() {
         velocity = jumpPower;
         jumping = true;
         jumpCount++;
+        rotationTarget += 90;
       } else if (airJumpsUsed < 1 && challengeMode) {
         velocity = jumpPower;
         airJumpsUsed++;
         jumpCount++;
+        rotationTarget += 90;
       }
     }
 
