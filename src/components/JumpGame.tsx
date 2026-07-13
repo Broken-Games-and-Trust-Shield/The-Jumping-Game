@@ -242,6 +242,7 @@ export default function JumpGame() {
       challengeOffered = false;
       challengeMode = false;
       challengeComplete = false;
+      doubleJumpUnlocked = false;
       x = 0;
       velocity = 0;
       playerY = 0;
