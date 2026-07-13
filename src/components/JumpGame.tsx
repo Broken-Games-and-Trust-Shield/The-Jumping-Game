@@ -45,6 +45,8 @@ export default function JumpGame() {
     let playerY = 0;
     let velocity = 0;
     let x = 0;
+    let rotation = 0;
+    let rotationTarget = 0;
 
     let dead = false;
     let jumping = false;
@@ -230,6 +232,8 @@ export default function JumpGame() {
       airJumpsUsed = 0;
       won = false;
       jumpCount = 0;
+      rotation = 0;
+      rotationTarget = 0;
     }
 
     function fullReset() {
@@ -294,10 +298,12 @@ export default function JumpGame() {
         velocity = jumpPower;
         jumping = true;
         jumpCount++;
+        rotationTarget += 90;
       } else if (airJumpsUsed < 1 && challengeMode) {
         velocity = jumpPower;
         airJumpsUsed++;
         jumpCount++;
+        rotationTarget += 90;
       }
     }
 
@@ -396,6 +402,11 @@ export default function JumpGame() {
           velocity = 0;
           jumping = false;
           airJumpsUsed = 0;
+          rotation = rotationTarget;
+        }
+
+        if (jumping) {
+          rotation += (rotationTarget - rotation) * 0.18;
         }
 
         for (const s of level.spikes) {
@@ -427,8 +438,12 @@ export default function JumpGame() {
       ctx.fillStyle = "white";
       ctx.fillRect(0, 250, 800, 5);
 
+      ctx.save();
+      ctx.translate(109, 239 - playerY);
+      ctx.rotate((rotation * Math.PI) / 180);
       ctx.fillStyle = "cyan";
-      ctx.fillRect(100, 230 - playerY, 18, 18);
+      ctx.fillRect(-9, -9, 18, 18);
+      ctx.restore();
 
       for (const s of level.spikes) {
         const screenX = s.x - x;
