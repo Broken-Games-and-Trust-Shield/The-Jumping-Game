@@ -18,6 +18,8 @@ interface Level {
   isChallenge: boolean;
 }
 
+type Screen = "menu" | "playing" | "paused" | "settings" | "about";
+
 export default function JumpGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -61,10 +63,25 @@ export default function JumpGame() {
     let challengeComplete = false;
     let doubleJumpUnlocked = false;
 
+    let screen: Screen = "menu";
+
     const sounds = [deathSound, xpSound, levelUpSound];
 
     const muteButton = { x: 715, y: 32, width: 25, height: 25 };
+    const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
     const challengeBtn = { x: 200, y: 128, width: 400, height: 28 };
+
+    // Menu buttons (canvas 800x300)
+    const menuPlayBtn = { x: 250, y: 105, width: 300, height: 40 };
+    const menuSettingsBtn = { x: 250, y: 155, width: 300, height: 40 };
+    const menuAboutBtn = { x: 250, y: 205, width: 300, height: 40 };
+
+    // Pause menu buttons
+    const resumeBtn = { x: 250, y: 120, width: 300, height: 40 };
+    const mainMenuBtn = { x: 250, y: 175, width: 300, height: 40 };
+
+    // Back button for settings / about
+    const backBtn = { x: 320, y: 245, width: 160, height: 32 };
 
     let jumpCount = 0;
     let currentDeaths = 0;
@@ -96,6 +113,7 @@ export default function JumpGame() {
       playerY = 0;
       airJumpsUsed = 0;
       jumping = false;
+      screen = "menu";
     };
 
     const gravity = -0.7;
@@ -254,6 +272,11 @@ export default function JumpGame() {
       jumping = false;
     }
 
+    function goToMainMenu() {
+      fullReset();
+      screen = "menu";
+    }
+
     function finishLevel() {
       if (levelIndex === LAST_NORMAL) {
         gameComplete = true;
@@ -308,7 +331,12 @@ export default function JumpGame() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Escape" && screen === "playing") {
+        screen = "paused";
+        return;
+      }
       if (e.code !== "Space") return;
+      if (screen !== "playing") return;
       if (doubleJumpUnlocked) {
         doubleJumpUnlocked = false;
         challengeMode = true;
@@ -322,6 +350,10 @@ export default function JumpGame() {
     };
     window.addEventListener("keydown", handleKeyDown);
 
+    function hit(cx: number, cy: number, b: { x: number; y: number; width: number; height: number }) {
+      return cx >= b.x && cx <= b.x + b.width && cy >= b.y && cy <= b.y + b.height;
+    }
+
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
@@ -329,14 +361,52 @@ export default function JumpGame() {
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
 
-      if (
-        clickX >= muteButton.x &&
-        clickX <= muteButton.x + muteButton.width &&
-        clickY >= muteButton.y &&
-        clickY <= muteButton.y + muteButton.height
-      ) {
+      // Main menu
+      if (screen === "menu") {
+        if (hit(clickX, clickY, menuPlayBtn)) {
+          fullReset();
+          screen = "playing";
+          return;
+        }
+        if (hit(clickX, clickY, menuSettingsBtn)) {
+          screen = "settings";
+          return;
+        }
+        if (hit(clickX, clickY, menuAboutBtn)) {
+          screen = "about";
+          return;
+        }
+        return;
+      }
+
+      if (screen === "settings" || screen === "about") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = "menu";
+        }
+        return;
+      }
+
+      if (screen === "paused") {
+        if (hit(clickX, clickY, resumeBtn)) {
+          screen = "playing";
+          return;
+        }
+        if (hit(clickX, clickY, mainMenuBtn)) {
+          goToMainMenu();
+          return;
+        }
+        return;
+      }
+
+      // screen === "playing"
+      if (hit(clickX, clickY, muteButton)) {
         muted = !muted;
         for (const sound of sounds) sound.muted = muted;
+        return;
+      }
+
+      if (hit(clickX, clickY, pauseButton)) {
+        screen = "paused";
         return;
       }
 
@@ -360,12 +430,7 @@ export default function JumpGame() {
       }
 
       if (gameComplete && challengeOffered) {
-        if (
-          clickX >= challengeBtn.x &&
-          clickX <= challengeBtn.x + challengeBtn.width &&
-          clickY >= challengeBtn.y &&
-          clickY <= challengeBtn.y + challengeBtn.height
-        ) {
+        if (hit(clickX, clickY, challengeBtn)) {
           doubleJumpUnlocked = true;
           gameComplete = false;
           challengeOffered = false;
@@ -386,13 +451,112 @@ export default function JumpGame() {
 
     let animationFrameId: number;
 
+    function drawButton(
+      b: { x: number; y: number; width: number; height: number },
+      label: string,
+      fontSize = 22,
+    ) {
+      if (!ctx) return;
+      ctx.fillStyle = "#7a7a7a";
+      ctx.fillRect(b.x, b.y, b.width, b.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, b.x + b.width / 2, b.y + b.height / 2);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+
+    function drawMenu() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#555";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 42px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("The Jumping Game", 400, 65);
+      ctx.textAlign = "left";
+      drawButton(menuPlayBtn, "Play");
+      drawButton(menuSettingsBtn, "Settings");
+      drawButton(menuAboutBtn, "About the Creator");
+    }
+
+    function drawSettings() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Sorry this page doesn't exist 😭", 400, 130);
+      ctx.textAlign = "left";
+      drawButton(backBtn, "Back", 18);
+    }
+
+    function drawAbout() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#555";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 26px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("About the Creator", 400, 40);
+      ctx.font = "bold 16px Arial";
+      const lines = [
+        "Hi! I'm ibrokethesystem! I am the creator of this",
+        "beta version of The Jumping Game!",
+        "I love to code games and play Minecraft!",
+      ];
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 400, 90 + i * 28);
+      });
+      ctx.textAlign = "left";
+      drawButton(backBtn, "Back", 18);
+    }
+
+    function drawPauseMenu() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#555";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 38px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Game Paused", 400, 60);
+      ctx.textAlign = "left";
+      drawButton(resumeBtn, "Resume Game");
+      drawButton(mainMenuBtn, "Main Menu");
+    }
+
     function loop() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      if (screen === "menu") {
+        drawMenu();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "settings") {
+        drawSettings();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "about") {
+        drawAbout();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+
       const level = levels[levelIndex];
 
-      if (!dead && !won && !gameComplete && !doubleJumpUnlocked) {
+      if (
+        screen === "playing" &&
+        !dead &&
+        !won &&
+        !gameComplete &&
+        !doubleJumpUnlocked
+      ) {
         x += level.speed;
         velocity += gravity;
         playerY += velocity;
@@ -470,10 +634,11 @@ export default function JumpGame() {
       const hsLabel = challengeMode
         ? `Challenge Best: ${challengeHighScore === Infinity ? "-" : challengeHighScore}`
         : `Best Run: ${runHighScore === Infinity ? "-" : runHighScore}`;
-      ctx.fillText(hsLabel, 740, 25);
+      ctx.fillText(hsLabel, 670, 25);
       ctx.textAlign = "left";
 
       ctx.font = "bold 18px Arial";
+      ctx.fillText("⏸️", pauseButton.x, pauseButton.y + 18);
       ctx.fillText(muted ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
 
       if (doubleJumpUnlocked) {
@@ -560,6 +725,10 @@ export default function JumpGame() {
         ctx.fillText("Click to play again", 300, 185);
       }
 
+      if (screen === "paused") {
+        drawPauseMenu();
+      }
+
       animationFrameId = requestAnimationFrame(loop);
     }
 
@@ -595,7 +764,7 @@ export default function JumpGame() {
         style={{ background: "#111" }}
       />
       <p className="mt-4 text-sm opacity-70">
-        Press SPACE or click to jump — double-tap to double jump!
+        Press SPACE or click to jump — ESC or ⏸️ to pause.
       </p>
     </div>
   );
