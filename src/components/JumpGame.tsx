@@ -18,7 +18,21 @@ interface Level {
   isChallenge: boolean;
 }
 
-type Screen = "menu" | "playing" | "paused" | "settings" | "about";
+type Screen =
+  | "menu"
+  | "playing"
+  | "paused"
+  | "settings"
+  | "about"
+  | "characterSelect"
+  | "outlineSelect";
+
+type OutlineChoice = "white" | "black" | "none";
+
+interface Character {
+  name: string;
+  color: string;
+}
 
 export default function JumpGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -64,6 +78,27 @@ export default function JumpGame() {
     let doubleJumpUnlocked = false;
 
     let screen: Screen = "menu";
+    let returnScreen: "menu" | "paused" = "menu";
+
+    const characters: Character[] = [
+      { name: "Blue", color: "cyan" },
+      { name: "Red", color: "#ff4d4d" },
+      { name: "Orange", color: "#ff9a1f" },
+      { name: "Yellow", color: "#ffe135" },
+      { name: "Purple", color: "#b166ff" },
+      { name: "Pink", color: "#ff6ec7" },
+    ];
+    const outlines: OutlineChoice[] = ["white", "black", "none"];
+
+    const charKey = "jump_game_character";
+    const outlineKey = "jump_game_outline";
+    let charIndex = Number(localStorage.getItem(charKey) ?? 0);
+    if (isNaN(charIndex) || charIndex < 0 || charIndex >= characters.length) charIndex = 0;
+    let outlineChoice = (localStorage.getItem(outlineKey) as OutlineChoice) || "white";
+    if (!outlines.includes(outlineChoice)) outlineChoice = "white";
+
+    // Preview index while browsing character select
+    let previewCharIndex = charIndex;
 
     const sounds = [deathSound, xpSound, levelUpSound];
 
@@ -71,17 +106,31 @@ export default function JumpGame() {
     const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
     const challengeBtn = { x: 200, y: 128, width: 400, height: 28 };
 
-    // Menu buttons (canvas 800x300)
-    const menuPlayBtn = { x: 250, y: 105, width: 300, height: 40 };
-    const menuSettingsBtn = { x: 250, y: 155, width: 300, height: 40 };
-    const menuAboutBtn = { x: 250, y: 205, width: 300, height: 40 };
+    // Main menu buttons (canvas 800x300)
+    const menuPlayBtn = { x: 250, y: 70, width: 300, height: 38 };
+    const menuSettingsBtn = { x: 250, y: 115, width: 300, height: 38 };
+    const menuAboutBtn = { x: 250, y: 160, width: 300, height: 38 };
+    const menuCharBtn = { x: 250, y: 205, width: 300, height: 38 };
 
     // Pause menu buttons
-    const resumeBtn = { x: 250, y: 120, width: 300, height: 40 };
-    const mainMenuBtn = { x: 250, y: 175, width: 300, height: 40 };
+    const resumeBtn = { x: 250, y: 90, width: 300, height: 38 };
+    const pauseMainMenuBtn = { x: 250, y: 140, width: 300, height: 38 };
+    const pauseCharBtn = { x: 250, y: 190, width: 300, height: 38 };
 
-    // Back button for settings / about
-    const backBtn = { x: 320, y: 245, width: 160, height: 32 };
+    // Back button for settings / about / char / outline
+    const backBtn = { x: 20, y: 250, width: 110, height: 32 };
+
+    // Character select controls
+    const charLeftArrow = { x: 200, y: 115, width: 60, height: 60 };
+    const charRightArrow = { x: 540, y: 115, width: 60, height: 60 };
+    const charSelectBtn = { x: 300, y: 245, width: 200, height: 35 };
+
+    // Outline select — three big swatches
+    const outlineBtns = [
+      { x: 90, y: 100, width: 160, height: 130 },
+      { x: 320, y: 100, width: 160, height: 130 },
+      { x: 550, y: 100, width: 160, height: 130 },
+    ];
 
     let jumpCount = 0;
     let currentDeaths = 0;
@@ -361,7 +410,6 @@ export default function JumpGame() {
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
 
-      // Main menu
       if (screen === "menu") {
         if (hit(clickX, clickY, menuPlayBtn)) {
           fullReset();
@@ -376,6 +424,12 @@ export default function JumpGame() {
           screen = "about";
           return;
         }
+        if (hit(clickX, clickY, menuCharBtn)) {
+          returnScreen = "menu";
+          previewCharIndex = charIndex;
+          screen = "characterSelect";
+          return;
+        }
         return;
       }
 
@@ -386,13 +440,60 @@ export default function JumpGame() {
         return;
       }
 
+      if (screen === "characterSelect") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = returnScreen;
+          return;
+        }
+        if (previewCharIndex > 0 && hit(clickX, clickY, charLeftArrow)) {
+          previewCharIndex--;
+          return;
+        }
+        if (
+          previewCharIndex < characters.length - 1 &&
+          hit(clickX, clickY, charRightArrow)
+        ) {
+          previewCharIndex++;
+          return;
+        }
+        if (hit(clickX, clickY, charSelectBtn)) {
+          charIndex = previewCharIndex;
+          localStorage.setItem(charKey, String(charIndex));
+          screen = "outlineSelect";
+          return;
+        }
+        return;
+      }
+
+      if (screen === "outlineSelect") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = "characterSelect";
+          return;
+        }
+        for (let i = 0; i < outlines.length; i++) {
+          if (hit(clickX, clickY, outlineBtns[i])) {
+            outlineChoice = outlines[i];
+            localStorage.setItem(outlineKey, outlineChoice);
+            screen = returnScreen;
+            return;
+          }
+        }
+        return;
+      }
+
       if (screen === "paused") {
         if (hit(clickX, clickY, resumeBtn)) {
           screen = "playing";
           return;
         }
-        if (hit(clickX, clickY, mainMenuBtn)) {
+        if (hit(clickX, clickY, pauseMainMenuBtn)) {
           goToMainMenu();
+          return;
+        }
+        if (hit(clickX, clickY, pauseCharBtn)) {
+          returnScreen = "paused";
+          previewCharIndex = charIndex;
+          screen = "characterSelect";
           return;
         }
         return;
@@ -468,18 +569,37 @@ export default function JumpGame() {
       ctx.textBaseline = "alphabetic";
     }
 
+    function drawSquare(
+      cx: number,
+      cy: number,
+      size: number,
+      color: string,
+      outline: OutlineChoice,
+      outlineWidth = 4,
+    ) {
+      if (!ctx) return;
+      ctx.fillStyle = color;
+      ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+      if (outline !== "none") {
+        ctx.strokeStyle = outline === "white" ? "#ffffff" : "#000000";
+        ctx.lineWidth = outlineWidth;
+        ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
+      }
+    }
+
     function drawMenu() {
       if (!ctx || !canvas) return;
       ctx.fillStyle = "#555";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#f5c518";
-      ctx.font = "bold 42px Arial";
+      ctx.font = "bold 32px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("The Jumping Game", 400, 65);
+      ctx.fillText("The Jumping Game", 400, 45);
       ctx.textAlign = "left";
-      drawButton(menuPlayBtn, "Play");
-      drawButton(menuSettingsBtn, "Settings");
-      drawButton(menuAboutBtn, "About the Creator");
+      drawButton(menuPlayBtn, "Play", 20);
+      drawButton(menuSettingsBtn, "Settings", 20);
+      drawButton(menuAboutBtn, "About the Creator", 20);
+      drawButton(menuCharBtn, "Character Customization", 20);
     }
 
     function drawSettings() {
@@ -515,17 +635,96 @@ export default function JumpGame() {
       drawButton(backBtn, "Back", 18);
     }
 
+    function drawArrow(
+      b: { x: number; y: number; width: number; height: number },
+      dir: "left" | "right",
+    ) {
+      if (!ctx) return;
+      ctx.fillStyle = "#7a7a7a";
+      ctx.fillRect(b.x, b.y, b.width, b.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.beginPath();
+      const cy = b.y + b.height / 2;
+      if (dir === "left") {
+        ctx.moveTo(b.x + b.width * 0.65, b.y + 12);
+        ctx.lineTo(b.x + b.width * 0.35, cy);
+        ctx.lineTo(b.x + b.width * 0.65, b.y + b.height - 12);
+      } else {
+        ctx.moveTo(b.x + b.width * 0.35, b.y + 12);
+        ctx.lineTo(b.x + b.width * 0.65, cy);
+        ctx.lineTo(b.x + b.width * 0.35, b.y + b.height - 12);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawCharacterSelect() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#333";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Select Your Character", 400, 32);
+
+      const c = characters[previewCharIndex];
+      drawSquare(400, 145, 90, c.color, outlineChoice, 5);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(
+        `${c.name} Square  (${previewCharIndex + 1}/${characters.length})`,
+        400,
+        215,
+      );
+      ctx.textAlign = "left";
+
+      if (previewCharIndex > 0) drawArrow(charLeftArrow, "left");
+      if (previewCharIndex < characters.length - 1)
+        drawArrow(charRightArrow, "right");
+
+      drawButton(charSelectBtn, "Select", 18);
+      drawButton(backBtn, "Back", 16);
+    }
+
+    function drawOutlineSelect() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#333";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Select Your Outline", 400, 32);
+
+      const c = characters[charIndex];
+      const labels = ["White Outline", "Black Outline", "No Outline"];
+
+      for (let i = 0; i < outlines.length; i++) {
+        const b = outlineBtns[i];
+        ctx.fillStyle = "#555";
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+        drawSquare(b.x + b.width / 2, b.y + 55, 70, c.color, outlines[i], 5);
+        ctx.fillStyle = "#f5c518";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(labels[i], b.x + b.width / 2, b.y + b.height - 15);
+      }
+      ctx.textAlign = "left";
+      drawButton(backBtn, "Back", 16);
+    }
+
     function drawPauseMenu() {
       if (!ctx || !canvas) return;
       ctx.fillStyle = "#555";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#f5c518";
-      ctx.font = "bold 38px Arial";
+      ctx.font = "bold 32px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("Game Paused", 400, 60);
+      ctx.fillText("Game Paused", 400, 55);
       ctx.textAlign = "left";
-      drawButton(resumeBtn, "Resume Game");
-      drawButton(mainMenuBtn, "Main Menu");
+      drawButton(resumeBtn, "Resume Game", 20);
+      drawButton(pauseMainMenuBtn, "Main Menu", 20);
+      drawButton(pauseCharBtn, "Character Customization", 20);
     }
 
     function loop() {
@@ -544,6 +743,16 @@ export default function JumpGame() {
       }
       if (screen === "about") {
         drawAbout();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "characterSelect") {
+        drawCharacterSelect();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "outlineSelect") {
+        drawOutlineSelect();
         animationFrameId = requestAnimationFrame(loop);
         return;
       }
@@ -605,8 +814,14 @@ export default function JumpGame() {
       ctx.save();
       ctx.translate(109, 239 - playerY);
       ctx.rotate((rotation * Math.PI) / 180);
-      ctx.fillStyle = "cyan";
+      const cc = characters[charIndex];
+      ctx.fillStyle = cc.color;
       ctx.fillRect(-9, -9, 18, 18);
+      if (outlineChoice !== "none") {
+        ctx.strokeStyle = outlineChoice === "white" ? "#ffffff" : "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-9, -9, 18, 18);
+      }
       ctx.restore();
 
       for (const s of level.spikes) {
