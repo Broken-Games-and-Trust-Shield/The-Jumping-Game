@@ -46,17 +46,28 @@ export default function JumpGame() {
     const deathSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-damage.mp3",
     );
-    deathSound.volume = 0.4;
-
     const xpSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-orb.mp3",
     );
-    xpSound.volume = 0.4;
-
     const levelUpSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-levelup.mp3",
     );
-    levelUpSound.volume = 0.5;
+    const baseVolumes = new Map<HTMLAudioElement, number>([
+      [deathSound, 0.4],
+      [xpSound, 0.4],
+      [levelUpSound, 0.5],
+    ]);
+
+    const volumeKey = "jump_game_volume";
+    let volume = Number(localStorage.getItem(volumeKey) ?? 1);
+    if (isNaN(volume) || volume < 0 || volume > 1) volume = 1;
+
+    function applyVolume() {
+      for (const [snd, base] of baseVolumes) {
+        snd.volume = Math.max(0, Math.min(1, base * volume));
+        snd.muted = muted || volume === 0;
+      }
+    }
 
     let playerY = 0;
     let velocity = 0;
