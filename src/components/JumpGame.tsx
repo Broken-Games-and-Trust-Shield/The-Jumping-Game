@@ -1056,6 +1056,9 @@ export default function JumpGame() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
       cancelAnimationFrame(animationFrameId);
       delete window.resetBestScores;
     };
