@@ -570,6 +570,51 @@ export default function JumpGame() {
     };
     canvas.addEventListener("click", handleClick);
 
+    function canvasCoords(e: MouseEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas!.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas!.height / rect.height),
+      };
+    }
+
+    function setVolumeFromX(px: number) {
+      const t = Math.max(0, Math.min(1, (px - volSlider.x) / volSlider.width));
+      volume = Math.round(t * 100) / 100;
+      localStorage.setItem(volumeKey, String(volume));
+      applyVolume();
+    }
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (screen !== "settings") return;
+      const { x: mx, y: my } = canvasCoords(e);
+      const knobX = volSlider.x + volume * volSlider.width;
+      const knobY = volSlider.y + volSlider.height / 2;
+      const onKnob = Math.hypot(mx - knobX, my - knobY) <= 16;
+      const onTrack =
+        mx >= volSlider.x - 8 &&
+        mx <= volSlider.x + volSlider.width + 8 &&
+        my >= volSlider.y - 12 &&
+        my <= volSlider.y + volSlider.height + 12;
+      if (onKnob || onTrack) {
+        draggingVolume = true;
+        setVolumeFromX(mx);
+      }
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingVolume) return;
+      const { x: mx } = canvasCoords(e);
+      setVolumeFromX(mx);
+    };
+    const handleMouseUp = () => {
+      draggingVolume = false;
+    };
+    canvas.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    applyVolume();
+
     let animationFrameId: number;
 
     function drawButton(
