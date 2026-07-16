@@ -46,17 +46,28 @@ export default function JumpGame() {
     const deathSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-damage.mp3",
     );
-    deathSound.volume = 0.4;
-
     const xpSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-orb.mp3",
     );
-    xpSound.volume = 0.4;
-
     const levelUpSound = new Audio(
       "https://www.myinstants.com/media/sounds/minecraft-levelup.mp3",
     );
-    levelUpSound.volume = 0.5;
+    const baseVolumes = new Map<HTMLAudioElement, number>([
+      [deathSound, 0.4],
+      [xpSound, 0.4],
+      [levelUpSound, 0.5],
+    ]);
+
+    const volumeKey = "jump_game_volume";
+    let volume = Number(localStorage.getItem(volumeKey) ?? 1);
+    if (isNaN(volume) || volume < 0 || volume > 1) volume = 1;
+
+    function applyVolume() {
+      for (const [snd, base] of baseVolumes) {
+        snd.volume = Math.max(0, Math.min(1, base * volume));
+        snd.muted = muted || volume === 0;
+      }
+    }
 
     let playerY = 0;
     let velocity = 0;
@@ -100,7 +111,9 @@ export default function JumpGame() {
     // Preview index while browsing character select
     let previewCharIndex = charIndex;
 
-    const sounds = [deathSound, xpSound, levelUpSound];
+    // Volume slider geometry on settings screen
+    const volSlider = { x: 150, y: 150, width: 500, height: 10 };
+    let draggingVolume = false;
 
     const muteButton = { x: 715, y: 32, width: 25, height: 25 };
     const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
@@ -433,7 +446,14 @@ export default function JumpGame() {
         return;
       }
 
-      if (screen === "settings" || screen === "about") {
+      if (screen === "about") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = "menu";
+        }
+        return;
+      }
+
+      if (screen === "settings") {
         if (hit(clickX, clickY, backBtn)) {
           screen = "menu";
         }
@@ -502,7 +522,7 @@ export default function JumpGame() {
       // screen === "playing"
       if (hit(clickX, clickY, muteButton)) {
         muted = !muted;
-        for (const sound of sounds) sound.muted = muted;
+        applyVolume();
         return;
       }
 
@@ -549,6 +569,51 @@ export default function JumpGame() {
       jump();
     };
     canvas.addEventListener("click", handleClick);
+
+    function canvasCoords(e: MouseEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas!.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas!.height / rect.height),
+      };
+    }
+
+    function setVolumeFromX(px: number) {
+      const t = Math.max(0, Math.min(1, (px - volSlider.x) / volSlider.width));
+      volume = Math.round(t * 100) / 100;
+      localStorage.setItem(volumeKey, String(volume));
+      applyVolume();
+    }
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (screen !== "settings") return;
+      const { x: mx, y: my } = canvasCoords(e);
+      const knobX = volSlider.x + volume * volSlider.width;
+      const knobY = volSlider.y + volSlider.height / 2;
+      const onKnob = Math.hypot(mx - knobX, my - knobY) <= 16;
+      const onTrack =
+        mx >= volSlider.x - 8 &&
+        mx <= volSlider.x + volSlider.width + 8 &&
+        my >= volSlider.y - 12 &&
+        my <= volSlider.y + volSlider.height + 12;
+      if (onKnob || onTrack) {
+        draggingVolume = true;
+        setVolumeFromX(mx);
+      }
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingVolume) return;
+      const { x: mx } = canvasCoords(e);
+      setVolumeFromX(mx);
+    };
+    const handleMouseUp = () => {
+      draggingVolume = false;
+    };
+    canvas.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    applyVolume();
 
     let animationFrameId: number;
 
@@ -604,12 +669,51 @@ export default function JumpGame() {
 
     function drawSettings() {
       if (!ctx || !canvas) return;
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#222";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       ctx.fillStyle = "#f5c518";
-      ctx.font = "bold 24px Arial";
+      ctx.font = "bold 26px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("Sorry this page doesn't exist 😭", 400, 130);
+      ctx.fillText("Settings", 400, 45);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("Sound Volume", 400, 100);
+
+      // Track
+      ctx.fillStyle = "#555";
+      ctx.fillRect(volSlider.x, volSlider.y, volSlider.width, volSlider.height);
+      // Filled portion
+      ctx.fillStyle = volume === 0 ? "#888" : "#f5c518";
+      ctx.fillRect(volSlider.x, volSlider.y, volume * volSlider.width, volSlider.height);
+      // Knob
+      const knobX = volSlider.x + volume * volSlider.width;
+      const knobY = volSlider.y + volSlider.height / 2;
+      ctx.beginPath();
+      ctx.arc(knobX, knobY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Icons on either side
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 22px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("🔇", volSlider.x - 30, volSlider.y + 10);
+      ctx.fillText("🔊", volSlider.x + volSlider.width + 30, volSlider.y + 10);
+
+      // Percentage label
+      ctx.fillStyle = volume === 0 ? "#ff6666" : "#fff";
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(
+        volume === 0 ? "Muted" : `${Math.round(volume * 100)}%`,
+        400,
+        200,
+      );
+
       ctx.textAlign = "left";
       drawButton(backBtn, "Back", 18);
     }
@@ -952,6 +1056,9 @@ export default function JumpGame() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
       cancelAnimationFrame(animationFrameId);
       delete window.resetBestScores;
     };
