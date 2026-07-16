@@ -111,7 +111,9 @@ export default function JumpGame() {
     // Preview index while browsing character select
     let previewCharIndex = charIndex;
 
-    const sounds = [deathSound, xpSound, levelUpSound];
+    // Volume slider geometry on settings screen
+    const volSlider = { x: 150, y: 150, width: 500, height: 10 };
+    let draggingVolume = false;
 
     const muteButton = { x: 715, y: 32, width: 25, height: 25 };
     const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
