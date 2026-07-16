@@ -515,7 +515,7 @@ export default function JumpGame() {
       // screen === "playing"
       if (hit(clickX, clickY, muteButton)) {
         muted = !muted;
-        for (const sound of sounds) sound.muted = muted;
+        applyVolume();
         return;
       }
 
