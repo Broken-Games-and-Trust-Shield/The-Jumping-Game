@@ -446,7 +446,14 @@ export default function JumpGame() {
         return;
       }
 
-      if (screen === "settings" || screen === "about") {
+      if (screen === "about") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = "menu";
+        }
+        return;
+      }
+
+      if (screen === "settings") {
         if (hit(clickX, clickY, backBtn)) {
           screen = "menu";
         }
