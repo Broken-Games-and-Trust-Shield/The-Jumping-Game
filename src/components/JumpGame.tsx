@@ -816,6 +816,7 @@ export default function JumpGame() {
       );
 
       ctx.textAlign = "left";
+      drawButton(hotkeySetupBtn, "Hotkey Setup", 18);
       drawButton(backBtn, "Back", 18);
     }
 
