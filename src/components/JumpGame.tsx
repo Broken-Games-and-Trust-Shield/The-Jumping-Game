@@ -118,6 +118,44 @@ export default function JumpGame() {
     const volSlider = { x: 150, y: 150, width: 500, height: 10 };
     let draggingVolume = false;
 
+    // Hotkey config
+    const hotkeyKey = "jump_game_hotkeys";
+    const defaultHotkeys: Record<HotkeyAction, string> = {
+      jump: "Space",
+      pause: "Escape",
+      mute: "KeyM",
+    };
+    let hotkeys: Record<HotkeyAction, string> = { ...defaultHotkeys };
+    try {
+      const saved = JSON.parse(localStorage.getItem(hotkeyKey) || "null");
+      if (saved && typeof saved === "object") {
+        hotkeys = { ...defaultHotkeys, ...saved };
+      }
+    } catch {}
+    let waitingForHotkey: HotkeyAction | null = null;
+    const hotkeyRows: { action: HotkeyAction; label: string; box: { x: number; y: number; width: number; height: number } }[] = [
+      { action: "jump", label: "Jump", box: { x: 300, y: 80, width: 200, height: 34 } },
+      { action: "pause", label: "Pause", box: { x: 300, y: 130, width: 200, height: 34 } },
+      { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
+    ];
+    const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+
+    function prettyKey(code: string) {
+      if (code === "Space") return "Space";
+      if (code === "Escape") return "Esc";
+      if (code.startsWith("Key")) return code.slice(3);
+      if (code.startsWith("Digit")) return code.slice(5);
+      return code;
+    }
+    function isAllowedHotkey(code: string) {
+      return (
+        code === "Space" ||
+        code === "Escape" ||
+        /^Key[A-Z]$/.test(code) ||
+        /^Digit[0-9]$/.test(code)
+      );
+    }
+
     const muteButton = { x: 715, y: 32, width: 25, height: 25 };
     const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
     const challengeBtn = { x: 200, y: 128, width: 400, height: 28 };
