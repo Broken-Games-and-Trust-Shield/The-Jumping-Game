@@ -126,9 +126,10 @@ export default function JumpGame() {
     const menuCharBtn = { x: 250, y: 205, width: 300, height: 38 };
 
     // Pause menu buttons
-    const resumeBtn = { x: 250, y: 90, width: 300, height: 38 };
-    const pauseMainMenuBtn = { x: 250, y: 140, width: 300, height: 38 };
-    const pauseCharBtn = { x: 250, y: 190, width: 300, height: 38 };
+    const resumeBtn = { x: 250, y: 70, width: 300, height: 38 };
+    const pauseMainMenuBtn = { x: 250, y: 115, width: 300, height: 38 };
+    const pauseCharBtn = { x: 250, y: 160, width: 300, height: 38 };
+    const pauseSettingsBtn = { x: 250, y: 205, width: 300, height: 38 };
 
     // Back button for settings / about / char / outline
     const backBtn = { x: 20, y: 250, width: 110, height: 32 };
@@ -430,6 +431,7 @@ export default function JumpGame() {
           return;
         }
         if (hit(clickX, clickY, menuSettingsBtn)) {
+          returnScreen = "menu";
           screen = "settings";
           return;
         }
@@ -455,7 +457,7 @@ export default function JumpGame() {
 
       if (screen === "settings") {
         if (hit(clickX, clickY, backBtn)) {
-          screen = "menu";
+          screen = returnScreen;
         }
         return;
       }
@@ -514,6 +516,11 @@ export default function JumpGame() {
           returnScreen = "paused";
           previewCharIndex = charIndex;
           screen = "characterSelect";
+          return;
+        }
+        if (hit(clickX, clickY, pauseSettingsBtn)) {
+          returnScreen = "paused";
+          screen = "settings";
           return;
         }
         return;
@@ -829,6 +836,7 @@ export default function JumpGame() {
       drawButton(resumeBtn, "Resume Game", 20);
       drawButton(pauseMainMenuBtn, "Main Menu", 20);
       drawButton(pauseCharBtn, "Character Customization", 20);
+      drawButton(pauseSettingsBtn, "Settings", 20);
     }
 
     function loop() {
@@ -958,7 +966,7 @@ export default function JumpGame() {
 
       ctx.font = "bold 18px Arial";
       ctx.fillText("⏸️", pauseButton.x, pauseButton.y + 18);
-      ctx.fillText(muted ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
+      ctx.fillText(muted || volume === 0 ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
 
       if (doubleJumpUnlocked) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
