@@ -530,7 +530,29 @@ export default function JumpGame() {
       if (screen === "settings") {
         if (hit(clickX, clickY, backBtn)) {
           screen = returnScreen;
+          return;
         }
+        if (hit(clickX, clickY, hotkeySetupBtn)) {
+          waitingForHotkey = null;
+          screen = "hotkeys";
+          return;
+        }
+        return;
+      }
+
+      if (screen === "hotkeys") {
+        if (hit(clickX, clickY, backBtn)) {
+          waitingForHotkey = null;
+          screen = "settings";
+          return;
+        }
+        for (const row of hotkeyRows) {
+          if (hit(clickX, clickY, row.box)) {
+            waitingForHotkey = row.action;
+            return;
+          }
+        }
+        waitingForHotkey = null;
         return;
       }
 
