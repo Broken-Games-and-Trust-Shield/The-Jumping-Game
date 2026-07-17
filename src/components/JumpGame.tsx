@@ -435,22 +435,53 @@ export default function JumpGame() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Escape" && screen === "playing") {
-        screen = "paused";
+      // Rebinding hotkey — capture next allowed key
+      if (waitingForHotkey && screen === "hotkeys") {
+        if (!isAllowedHotkey(e.code)) return;
+        e.preventDefault();
+        // If key already used by another action, swap them
+        for (const a of Object.keys(hotkeys) as HotkeyAction[]) {
+          if (a !== waitingForHotkey && hotkeys[a] === e.code) {
+            hotkeys[a] = hotkeys[waitingForHotkey];
+          }
+        }
+        hotkeys[waitingForHotkey] = e.code;
+        localStorage.setItem(hotkeyKey, JSON.stringify(hotkeys));
+        waitingForHotkey = null;
         return;
       }
-      if (e.code !== "Space") return;
-      if (screen !== "playing") return;
-      if (doubleJumpUnlocked) {
-        doubleJumpUnlocked = false;
-        challengeMode = true;
-        gameComplete = false;
-        levelIndex = 5;
-        currentDeaths = 0;
-        resetLevel();
+
+      // Pause / resume
+      if (e.code === hotkeys.pause) {
+        if (screen === "playing") {
+          screen = "paused";
+          return;
+        }
+        if (screen === "paused") {
+          screen = "playing";
+          return;
+        }
+      }
+      // Mute toggle during play
+      if (e.code === hotkeys.mute && screen === "playing") {
+        muted = !muted;
+        applyVolume();
         return;
       }
-      jump();
+      // Jump
+      if (e.code === hotkeys.jump) {
+        if (screen !== "playing") return;
+        if (doubleJumpUnlocked) {
+          doubleJumpUnlocked = false;
+          challengeMode = true;
+          gameComplete = false;
+          levelIndex = 5;
+          currentDeaths = 0;
+          resetLevel();
+          return;
+        }
+        jump();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
 
