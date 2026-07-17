@@ -431,6 +431,7 @@ export default function JumpGame() {
           return;
         }
         if (hit(clickX, clickY, menuSettingsBtn)) {
+          returnScreen = "menu";
           screen = "settings";
           return;
         }
