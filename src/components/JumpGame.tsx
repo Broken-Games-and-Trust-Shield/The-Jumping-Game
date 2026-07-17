@@ -820,6 +820,53 @@ export default function JumpGame() {
       drawButton(backBtn, "Back", 18);
     }
 
+    function drawHotkeys() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Hotkey Setup", 400, 40);
+
+      ctx.font = "14px Arial";
+      ctx.fillStyle = "#ccc";
+      ctx.fillText(
+        waitingForHotkey
+          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, Space, Esc)`
+          : "Click an action, then press a key to bind it.",
+        400,
+        62,
+      );
+
+      for (const row of hotkeyRows) {
+        // action label
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(row.label, row.box.x - 20, row.box.y + 23);
+        // key box
+        const isWaiting = waitingForHotkey === row.action;
+        ctx.fillStyle = isWaiting ? "#f5c518" : "#444";
+        ctx.fillRect(row.box.x, row.box.y, row.box.width, row.box.height);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(row.box.x, row.box.y, row.box.width, row.box.height);
+        ctx.fillStyle = isWaiting ? "#000" : "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          isWaiting ? "Press any key..." : prettyKey(hotkeys[row.action]),
+          row.box.x + row.box.width / 2,
+          row.box.y + 23,
+        );
+      }
+      ctx.textAlign = "left";
+      drawButton(backBtn, "Back", 18);
+    }
+
+
+
     function drawAbout() {
       if (!ctx || !canvas) return;
       ctx.fillStyle = "#555";
