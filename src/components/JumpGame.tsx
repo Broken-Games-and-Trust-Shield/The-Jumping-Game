@@ -23,9 +23,12 @@ type Screen =
   | "playing"
   | "paused"
   | "settings"
+  | "hotkeys"
   | "about"
   | "characterSelect"
   | "outlineSelect";
+
+type HotkeyAction = "jump" | "pause" | "mute";
 
 type OutlineChoice = "white" | "black" | "none";
 
