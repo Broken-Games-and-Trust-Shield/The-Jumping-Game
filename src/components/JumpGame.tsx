@@ -995,6 +995,11 @@ export default function JumpGame() {
         animationFrameId = requestAnimationFrame(loop);
         return;
       }
+      if (screen === "hotkeys") {
+        drawHotkeys();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
       if (screen === "about") {
         drawAbout();
         animationFrameId = requestAnimationFrame(loop);
