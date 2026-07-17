@@ -958,7 +958,7 @@ export default function JumpGame() {
 
       ctx.font = "bold 18px Arial";
       ctx.fillText("⏸️", pauseButton.x, pauseButton.y + 18);
-      ctx.fillText(muted ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
+      ctx.fillText(muted || volume === 0 ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
 
       if (doubleJumpUnlocked) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
