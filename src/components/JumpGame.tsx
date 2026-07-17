@@ -836,6 +836,7 @@ export default function JumpGame() {
       drawButton(resumeBtn, "Resume Game", 20);
       drawButton(pauseMainMenuBtn, "Main Menu", 20);
       drawButton(pauseCharBtn, "Character Customization", 20);
+      drawButton(pauseSettingsBtn, "Settings", 20);
     }
 
     function loop() {
