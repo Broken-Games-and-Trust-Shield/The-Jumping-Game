@@ -23,9 +23,12 @@ type Screen =
   | "playing"
   | "paused"
   | "settings"
+  | "hotkeys"
   | "about"
   | "characterSelect"
   | "outlineSelect";
+
+type HotkeyAction = "jump" | "pause" | "mute";
 
 type OutlineChoice = "white" | "black" | "none";
 
@@ -114,6 +117,44 @@ export default function JumpGame() {
     // Volume slider geometry on settings screen
     const volSlider = { x: 150, y: 150, width: 500, height: 10 };
     let draggingVolume = false;
+
+    // Hotkey config
+    const hotkeyKey = "jump_game_hotkeys";
+    const defaultHotkeys: Record<HotkeyAction, string> = {
+      jump: "Space",
+      pause: "Escape",
+      mute: "KeyM",
+    };
+    let hotkeys: Record<HotkeyAction, string> = { ...defaultHotkeys };
+    try {
+      const saved = JSON.parse(localStorage.getItem(hotkeyKey) || "null");
+      if (saved && typeof saved === "object") {
+        hotkeys = { ...defaultHotkeys, ...saved };
+      }
+    } catch {}
+    let waitingForHotkey: HotkeyAction | null = null;
+    const hotkeyRows: { action: HotkeyAction; label: string; box: { x: number; y: number; width: number; height: number } }[] = [
+      { action: "jump", label: "Jump", box: { x: 300, y: 80, width: 200, height: 34 } },
+      { action: "pause", label: "Pause", box: { x: 300, y: 130, width: 200, height: 34 } },
+      { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
+    ];
+    const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+
+    function prettyKey(code: string) {
+      if (code === "Space") return "Space";
+      if (code === "Escape") return "Esc";
+      if (code.startsWith("Key")) return code.slice(3);
+      if (code.startsWith("Digit")) return code.slice(5);
+      return code;
+    }
+    function isAllowedHotkey(code: string) {
+      return (
+        code === "Space" ||
+        code === "Escape" ||
+        /^Key[A-Z]$/.test(code) ||
+        /^Digit[0-9]$/.test(code)
+      );
+    }
 
     const muteButton = { x: 715, y: 32, width: 25, height: 25 };
     const pauseButton = { x: 680, y: 32, width: 25, height: 25 };
@@ -394,22 +435,53 @@ export default function JumpGame() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Escape" && screen === "playing") {
-        screen = "paused";
+      // Rebinding hotkey — capture next allowed key
+      if (waitingForHotkey && screen === "hotkeys") {
+        if (!isAllowedHotkey(e.code)) return;
+        e.preventDefault();
+        // If key already used by another action, swap them
+        for (const a of Object.keys(hotkeys) as HotkeyAction[]) {
+          if (a !== waitingForHotkey && hotkeys[a] === e.code) {
+            hotkeys[a] = hotkeys[waitingForHotkey];
+          }
+        }
+        hotkeys[waitingForHotkey] = e.code;
+        localStorage.setItem(hotkeyKey, JSON.stringify(hotkeys));
+        waitingForHotkey = null;
         return;
       }
-      if (e.code !== "Space") return;
-      if (screen !== "playing") return;
-      if (doubleJumpUnlocked) {
-        doubleJumpUnlocked = false;
-        challengeMode = true;
-        gameComplete = false;
-        levelIndex = 5;
-        currentDeaths = 0;
-        resetLevel();
+
+      // Pause / resume
+      if (e.code === hotkeys.pause) {
+        if (screen === "playing") {
+          screen = "paused";
+          return;
+        }
+        if (screen === "paused") {
+          screen = "playing";
+          return;
+        }
+      }
+      // Mute toggle during play
+      if (e.code === hotkeys.mute && screen === "playing") {
+        muted = !muted;
+        applyVolume();
         return;
       }
-      jump();
+      // Jump
+      if (e.code === hotkeys.jump) {
+        if (screen !== "playing") return;
+        if (doubleJumpUnlocked) {
+          doubleJumpUnlocked = false;
+          challengeMode = true;
+          gameComplete = false;
+          levelIndex = 5;
+          currentDeaths = 0;
+          resetLevel();
+          return;
+        }
+        jump();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -458,7 +530,29 @@ export default function JumpGame() {
       if (screen === "settings") {
         if (hit(clickX, clickY, backBtn)) {
           screen = returnScreen;
+          return;
         }
+        if (hit(clickX, clickY, hotkeySetupBtn)) {
+          waitingForHotkey = null;
+          screen = "hotkeys";
+          return;
+        }
+        return;
+      }
+
+      if (screen === "hotkeys") {
+        if (hit(clickX, clickY, backBtn)) {
+          waitingForHotkey = null;
+          screen = "settings";
+          return;
+        }
+        for (const row of hotkeyRows) {
+          if (hit(clickX, clickY, row.box)) {
+            waitingForHotkey = row.action;
+            return;
+          }
+        }
+        waitingForHotkey = null;
         return;
       }
 
@@ -722,8 +816,56 @@ export default function JumpGame() {
       );
 
       ctx.textAlign = "left";
+      drawButton(hotkeySetupBtn, "Hotkey Setup", 18);
       drawButton(backBtn, "Back", 18);
     }
+
+    function drawHotkeys() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Hotkey Setup", 400, 40);
+
+      ctx.font = "14px Arial";
+      ctx.fillStyle = "#ccc";
+      ctx.fillText(
+        waitingForHotkey
+          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, Space, Esc)`
+          : "Click an action, then press a key to bind it.",
+        400,
+        62,
+      );
+
+      for (const row of hotkeyRows) {
+        // action label
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(row.label, row.box.x - 20, row.box.y + 23);
+        // key box
+        const isWaiting = waitingForHotkey === row.action;
+        ctx.fillStyle = isWaiting ? "#f5c518" : "#444";
+        ctx.fillRect(row.box.x, row.box.y, row.box.width, row.box.height);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(row.box.x, row.box.y, row.box.width, row.box.height);
+        ctx.fillStyle = isWaiting ? "#000" : "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          isWaiting ? "Press any key..." : prettyKey(hotkeys[row.action]),
+          row.box.x + row.box.width / 2,
+          row.box.y + 23,
+        );
+      }
+      ctx.textAlign = "left";
+      drawButton(backBtn, "Back", 18);
+    }
+
+
 
     function drawAbout() {
       if (!ctx || !canvas) return;
@@ -850,6 +992,11 @@ export default function JumpGame() {
       }
       if (screen === "settings") {
         drawSettings();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "hotkeys") {
+        drawHotkeys();
         animationFrameId = requestAnimationFrame(loop);
         return;
       }
