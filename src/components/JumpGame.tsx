@@ -518,6 +518,11 @@ export default function JumpGame() {
           screen = "characterSelect";
           return;
         }
+        if (hit(clickX, clickY, pauseSettingsBtn)) {
+          returnScreen = "paused";
+          screen = "settings";
+          return;
+        }
         return;
       }
 
