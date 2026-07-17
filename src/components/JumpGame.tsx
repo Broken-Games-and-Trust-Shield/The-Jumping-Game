@@ -126,9 +126,10 @@ export default function JumpGame() {
     const menuCharBtn = { x: 250, y: 205, width: 300, height: 38 };
 
     // Pause menu buttons
-    const resumeBtn = { x: 250, y: 90, width: 300, height: 38 };
-    const pauseMainMenuBtn = { x: 250, y: 140, width: 300, height: 38 };
-    const pauseCharBtn = { x: 250, y: 190, width: 300, height: 38 };
+    const resumeBtn = { x: 250, y: 70, width: 300, height: 38 };
+    const pauseMainMenuBtn = { x: 250, y: 115, width: 300, height: 38 };
+    const pauseCharBtn = { x: 250, y: 160, width: 300, height: 38 };
+    const pauseSettingsBtn = { x: 250, y: 205, width: 300, height: 38 };
 
     // Back button for settings / about / char / outline
     const backBtn = { x: 20, y: 250, width: 110, height: 32 };
