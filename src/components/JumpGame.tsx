@@ -62,14 +62,29 @@ export default function JumpGame() {
     ]);
 
     const volumeKey = "jump_game_volume";
+    const lastVolumeKey = "jump_game_last_volume";
     let volume = Number(localStorage.getItem(volumeKey) ?? 1);
     if (isNaN(volume) || volume < 0 || volume > 1) volume = 1;
+    let lastVolume = Number(localStorage.getItem(lastVolumeKey) ?? 0.5);
+    if (isNaN(lastVolume) || lastVolume <= 0 || lastVolume > 1) lastVolume = 0.5;
 
     function applyVolume() {
       for (const [snd, base] of baseVolumes) {
         snd.volume = Math.max(0, Math.min(1, base * volume));
-        snd.muted = muted || volume === 0;
+        snd.muted = volume === 0;
       }
+    }
+
+    function toggleMute() {
+      if (volume === 0) {
+        volume = lastVolume;
+      } else {
+        lastVolume = volume;
+        localStorage.setItem(lastVolumeKey, String(lastVolume));
+        volume = 0;
+      }
+      localStorage.setItem(volumeKey, String(volume));
+      applyVolume();
     }
 
     let playerY = 0;
@@ -84,7 +99,6 @@ export default function JumpGame() {
     let levelIndex = 0;
     let won = false;
     let gameComplete = false;
-    let muted = false;
 
     let challengeOffered = false;
     let challengeMode = false;
