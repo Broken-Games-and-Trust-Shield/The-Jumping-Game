@@ -886,6 +886,7 @@ export default function JumpGame() {
         );
       }
       ctx.textAlign = "left";
+      drawButton(resetHotkeysBtn, "Reset to Defaults", 16);
       drawButton(backBtn, "Back", 18);
     }
 
