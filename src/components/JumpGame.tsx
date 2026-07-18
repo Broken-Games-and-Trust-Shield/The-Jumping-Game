@@ -62,14 +62,29 @@ export default function JumpGame() {
     ]);
 
     const volumeKey = "jump_game_volume";
+    const lastVolumeKey = "jump_game_last_volume";
     let volume = Number(localStorage.getItem(volumeKey) ?? 1);
     if (isNaN(volume) || volume < 0 || volume > 1) volume = 1;
+    let lastVolume = Number(localStorage.getItem(lastVolumeKey) ?? 0.5);
+    if (isNaN(lastVolume) || lastVolume <= 0 || lastVolume > 1) lastVolume = 0.5;
 
     function applyVolume() {
       for (const [snd, base] of baseVolumes) {
         snd.volume = Math.max(0, Math.min(1, base * volume));
-        snd.muted = muted || volume === 0;
+        snd.muted = volume === 0;
       }
+    }
+
+    function toggleMute() {
+      if (volume === 0) {
+        volume = lastVolume;
+      } else {
+        lastVolume = volume;
+        localStorage.setItem(lastVolumeKey, String(lastVolume));
+        volume = 0;
+      }
+      localStorage.setItem(volumeKey, String(volume));
+      applyVolume();
     }
 
     let playerY = 0;
@@ -84,7 +99,6 @@ export default function JumpGame() {
     let levelIndex = 0;
     let won = false;
     let gameComplete = false;
-    let muted = false;
 
     let challengeOffered = false;
     let challengeMode = false;
@@ -464,8 +478,7 @@ export default function JumpGame() {
       }
       // Mute toggle during play
       if (e.code === hotkeys.mute && screen === "playing") {
-        muted = !muted;
-        applyVolume();
+        toggleMute();
         return;
       }
       // Jump
@@ -622,8 +635,7 @@ export default function JumpGame() {
 
       // screen === "playing"
       if (hit(clickX, clickY, muteButton)) {
-        muted = !muted;
-        applyVolume();
+        toggleMute();
         return;
       }
 
@@ -681,7 +693,12 @@ export default function JumpGame() {
 
     function setVolumeFromX(px: number) {
       const t = Math.max(0, Math.min(1, (px - volSlider.x) / volSlider.width));
-      volume = Math.round(t * 100) / 100;
+      const newVolume = Math.round(t * 100) / 100;
+      if (newVolume === 0 && volume > 0) {
+        lastVolume = volume;
+        localStorage.setItem(lastVolumeKey, String(lastVolume));
+      }
+      volume = newVolume;
       localStorage.setItem(volumeKey, String(volume));
       applyVolume();
     }
@@ -1113,7 +1130,7 @@ export default function JumpGame() {
 
       ctx.font = "bold 18px Arial";
       ctx.fillText("⏸️", pauseButton.x, pauseButton.y + 18);
-      ctx.fillText(muted || volume === 0 ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
+      ctx.fillText(volume === 0 ? "🔇" : "🔈", muteButton.x, muteButton.y + 18);
 
       if (doubleJumpUnlocked) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
