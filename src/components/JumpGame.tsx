@@ -635,8 +635,7 @@ export default function JumpGame() {
 
       // screen === "playing"
       if (hit(clickX, clickY, muteButton)) {
-        muted = !muted;
-        applyVolume();
+        toggleMute();
         return;
       }
 
