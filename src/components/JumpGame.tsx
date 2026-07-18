@@ -560,6 +560,12 @@ export default function JumpGame() {
           screen = "settings";
           return;
         }
+        if (hit(clickX, clickY, resetHotkeysBtn)) {
+          hotkeys = { ...defaultHotkeys };
+          localStorage.setItem(hotkeyKey, JSON.stringify(hotkeys));
+          waitingForHotkey = null;
+          return;
+        }
         for (const row of hotkeyRows) {
           if (hit(clickX, clickY, row.box)) {
             waitingForHotkey = row.action;
