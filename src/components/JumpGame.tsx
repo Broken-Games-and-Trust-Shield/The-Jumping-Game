@@ -153,6 +153,7 @@ export default function JumpGame() {
       { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
     ];
     const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+    const resetHotkeysBtn = { x: 250, y: 245, width: 300, height: 34 };
 
     function prettyKey(code: string) {
       if (code === "Space") return "Space";
@@ -559,6 +560,12 @@ export default function JumpGame() {
           screen = "settings";
           return;
         }
+        if (hit(clickX, clickY, resetHotkeysBtn)) {
+          hotkeys = { ...defaultHotkeys };
+          localStorage.setItem(hotkeyKey, JSON.stringify(hotkeys));
+          waitingForHotkey = null;
+          return;
+        }
         for (const row of hotkeyRows) {
           if (hit(clickX, clickY, row.box)) {
             waitingForHotkey = row.action;
@@ -879,6 +886,7 @@ export default function JumpGame() {
         );
       }
       ctx.textAlign = "left";
+      drawButton(resetHotkeysBtn, "Reset to Defaults", 16);
       drawButton(backBtn, "Back", 18);
     }
 
