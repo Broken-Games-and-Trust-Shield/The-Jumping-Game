@@ -478,8 +478,7 @@ export default function JumpGame() {
       }
       // Mute toggle during play
       if (e.code === hotkeys.mute && screen === "playing") {
-        muted = !muted;
-        applyVolume();
+        toggleMute();
         return;
       }
       // Jump
