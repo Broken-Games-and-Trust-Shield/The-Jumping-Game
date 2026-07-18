@@ -153,6 +153,7 @@ export default function JumpGame() {
       { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
     ];
     const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+    const resetHotkeysBtn = { x: 250, y: 245, width: 300, height: 34 };
 
     function prettyKey(code: string) {
       if (code === "Space") return "Space";
