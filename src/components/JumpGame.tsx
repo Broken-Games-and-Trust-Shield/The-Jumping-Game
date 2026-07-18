@@ -693,7 +693,12 @@ export default function JumpGame() {
 
     function setVolumeFromX(px: number) {
       const t = Math.max(0, Math.min(1, (px - volSlider.x) / volSlider.width));
-      volume = Math.round(t * 100) / 100;
+      const newVolume = Math.round(t * 100) / 100;
+      if (newVolume === 0 && volume > 0) {
+        lastVolume = volume;
+        localStorage.setItem(lastVolumeKey, String(lastVolume));
+      }
+      volume = newVolume;
       localStorage.setItem(volumeKey, String(volume));
       applyVolume();
     }
