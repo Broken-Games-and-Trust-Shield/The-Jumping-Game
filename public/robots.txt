@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://the-jumping-game.lovable.app/sitemap.xml
