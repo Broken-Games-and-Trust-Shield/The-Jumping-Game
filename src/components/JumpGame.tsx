@@ -1314,6 +1314,10 @@ export default function JumpGame() {
       canvas.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      void audioCtx?.close();
+
       cancelAnimationFrame(animationFrameId);
       delete window.resetBestScores;
     };
