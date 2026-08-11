@@ -33,7 +33,6 @@ export const Route = createFileRoute("/")({
           applicationCategory: "GameApplication",
           operatingSystem: "Any",
           genre: "Platformer",
-philosophy: undefined,
         }),
       },
     ],
