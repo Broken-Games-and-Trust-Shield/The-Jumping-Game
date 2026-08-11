@@ -46,19 +46,93 @@ export default function JumpGame() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const deathSound = new Audio(
-      "https://www.myinstants.com/media/sounds/minecraft-damage.mp3",
+    // Synthesized sound effects (no network / hotlink dependency)
+    type Sfx = {
+      currentTime: number;
+      volume: number;
+      muted: boolean;
+      play: () => Promise<void>;
+    };
+
+    let audioCtx: AudioContext | null = null;
+    function getCtx(): AudioContext | null {
+      const Ctor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!Ctor) return null;
+      if (!audioCtx) audioCtx = new Ctor();
+      if (audioCtx.state === "suspended") void audioCtx.resume();
+      return audioCtx;
+    }
+    // Unlock audio on the first user gesture (browser autoplay policy)
+    const unlockAudio = () => {
+      getCtx();
+    };
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+
+    function makeSfx(
+      notes: { freq: number; start: number; dur: number }[],
+      type: OscillatorType,
+    ): Sfx {
+      const sfx: Sfx = {
+        currentTime: 0,
+        volume: 1,
+        muted: false,
+        play: async () => {
+          const ac = getCtx();
+          if (!ac || sfx.muted || sfx.volume <= 0) return;
+          const now = ac.currentTime;
+          for (const n of notes) {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(n.freq, now + n.start);
+            gain.gain.setValueAtTime(0.0001, now + n.start);
+            gain.gain.exponentialRampToValueAtTime(
+              Math.max(0.0002, sfx.volume),
+              now + n.start + 0.01,
+            );
+            gain.gain.exponentialRampToValueAtTime(
+              0.0001,
+              now + n.start + n.dur,
+            );
+            osc.connect(gain).connect(ac.destination);
+            osc.start(now + n.start);
+            osc.stop(now + n.start + n.dur + 0.02);
+          }
+        },
+      };
+      return sfx;
+    }
+
+    const deathSound = makeSfx(
+      [
+        { freq: 200, start: 0, dur: 0.18 },
+        { freq: 120, start: 0.1, dur: 0.25 },
+      ],
+      "square",
     );
-    const xpSound = new Audio(
-      "https://www.myinstants.com/media/sounds/minecraft-orb.mp3",
+    const xpSound = makeSfx(
+      [
+        { freq: 880, start: 0, dur: 0.1 },
+        { freq: 1320, start: 0.06, dur: 0.12 },
+      ],
+      "sine",
     );
-    const levelUpSound = new Audio(
-      "https://www.myinstants.com/media/sounds/minecraft-levelup.mp3",
+    const levelUpSound = makeSfx(
+      [
+        { freq: 523, start: 0, dur: 0.15 },
+        { freq: 659, start: 0.12, dur: 0.15 },
+        { freq: 784, start: 0.24, dur: 0.25 },
+      ],
+      "triangle",
     );
-    const baseVolumes = new Map<HTMLAudioElement, number>([
+    const baseVolumes = new Map<Sfx, number>([
       [deathSound, 0.4],
-      [xpSound, 0.4],
-      [levelUpSound, 0.5],
+      [xpSound, 0.3],
+      [levelUpSound, 0.35],
     ]);
 
     const volumeKey = "jump_game_volume";
@@ -74,6 +148,7 @@ export default function JumpGame() {
         snd.muted = volume === 0;
       }
     }
+
 
     function toggleMute() {
       if (volume === 0) {
