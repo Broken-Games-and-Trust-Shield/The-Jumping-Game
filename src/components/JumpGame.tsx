@@ -1246,7 +1246,7 @@ export default function JumpGame() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-      <h1 className="text-2xl mb-2">Jumping Game Preview</h1>
+      <h1 className="text-2xl mb-2">Jump Master: Side-Scrolling Platformer</h1>
       <button
         onClick={() => window.resetBestScores?.()}
         style={{
