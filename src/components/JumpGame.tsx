@@ -1158,14 +1158,45 @@ export default function JumpGame() {
           rotation += (rotationTarget - rotation) * 0.18;
         }
 
+        function pointInTriangle(
+          px: number,
+          py: number,
+          ax: number,
+          ay: number,
+          bx: number,
+          by: number,
+          cx: number,
+          cy: number,
+        ) {
+          const denom = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
+          const a =
+            ((by - cy) * (px - cx) + (cx - bx) * (py - cy)) / denom;
+          const b =
+            ((cy - ay) * (px - cx) + (ax - cx) * (py - cy)) / denom;
+          const c = 1 - a - b;
+          return a >= 0 && b >= 0 && c >= 0;
+        }
+
         for (const s of level.spikes) {
           const screenX = s.x - x;
           if (screenX < -50 || screenX > 200) continue;
 
-          const horizHit = screenX < 118 && screenX + 18 > 100;
-          const vertHit = s.tall ? playerY < 38 : playerY < 18;
-
-          if (horizHit && vertHit && !dead) {
+          const h = s.tall ? 40 : 20;
+          const px = 109;
+          const py = 248 - playerY;
+          if (
+            pointInTriangle(
+              px,
+              py,
+              screenX,
+              250,
+              screenX + 20,
+              250,
+              screenX + 10,
+              250 - h,
+            ) &&
+            !dead
+          ) {
             dead = true;
             currentDeaths++;
             deathSound.currentTime = 0;
