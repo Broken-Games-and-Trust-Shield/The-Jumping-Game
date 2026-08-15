@@ -1373,10 +1373,11 @@ export default function JumpGame() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+    <main className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
       <h1 className="text-2xl mb-2">Jump Master: Side-Scrolling Platformer</h1>
       <button
         onClick={() => window.resetBestScores?.()}
+        aria-label="Reset saved best scores and start over"
         style={{
           marginBottom: 10,
           padding: "6px 12px",
@@ -1391,11 +1392,45 @@ export default function JumpGame() {
         ref={canvasRef}
         width={800}
         height={300}
+        role="application"
+        aria-label="Jump Master game screen. Use Space to jump, Escape to pause, and M to mute."
         style={{ background: "#111" }}
       />
       <p className="mt-4 text-sm opacity-70">
         Press SPACE or click to jump — ESC or ⏸️ to pause.
       </p>
-    </div>
+
+      <section className="mt-8 max-w-2xl px-4 pb-12 text-sm leading-relaxed opacity-90">
+        <h2 className="text-lg mb-2">How to play Jump Master</h2>
+        <p className="mb-4">
+          Jump Master is a free browser platformer. You control a square runner that
+          sprints across an endless track while red and orange triangular spikes rise
+          from the ground. Tap Space or click to jump; each jump spins your character a
+          quarter turn in one fluid motion. Clear the challenge gate and double jump
+          unlocks, letting you chain a second mid-air hop over taller spike clusters.
+        </p>
+        <h2 className="text-lg mb-2">Menus and customization</h2>
+        <p className="mb-4">
+          The main menu offers Play, Character Customization, Settings, and About. In
+          Character Customization you can pick between blue, red, orange, yellow,
+          purple, and pink runners, then choose a white, black, or no outline. Your
+          choice is saved in the browser, so your runner looks the same next visit.
+        </p>
+        <h2 className="text-lg mb-2">Settings, sound, and hotkeys</h2>
+        <p className="mb-4">
+          Settings includes a master volume slider — dragging it to 0% mutes the game,
+          and the in-game speaker icon always matches the slider. Hotkey Setup lets you
+          rebind Jump, Pause, and Mute to any letter, number, Space, or Escape, with a
+          Reset to Defaults option if you want the original controls back.
+        </p>
+        <h2 className="text-lg mb-2">Controls</h2>
+        <ul className="list-disc pl-5">
+          <li>Space or mouse click — jump (and double jump once unlocked)</li>
+          <li>Escape or the pause button — pause and resume a run</li>
+          <li>M — toggle mute during gameplay</li>
+        </ul>
+      </section>
+    </main>
   );
 }
+
