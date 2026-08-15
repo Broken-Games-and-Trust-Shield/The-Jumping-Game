@@ -62,12 +62,17 @@ export default function JumpGame() {
           .webkitAudioContext;
       if (!Ctor) return null;
       if (!audioCtx) audioCtx = new Ctor();
-      if (audioCtx.state === "suspended") void audioCtx.resume();
       return audioCtx;
+    }
+    async function getReadyCtx(): Promise<AudioContext | null> {
+      const ac = getCtx();
+      if (!ac) return null;
+      if (ac.state === "suspended") await ac.resume();
+      return ac.state === "running" ? ac : null;
     }
     // Unlock audio on the first user gesture (browser autoplay policy)
     const unlockAudio = () => {
-      getCtx();
+      void getReadyCtx();
     };
     window.addEventListener("pointerdown", unlockAudio);
     window.addEventListener("keydown", unlockAudio);
@@ -81,7 +86,7 @@ export default function JumpGame() {
         volume: 1,
         muted: false,
         play: async () => {
-          const ac = getCtx();
+          const ac = await getReadyCtx();
           if (!ac || sfx.muted || sfx.volume <= 0) return;
           const now = ac.currentTime;
           for (const n of notes) {
@@ -107,6 +112,13 @@ export default function JumpGame() {
       return sfx;
     }
 
+    const jumpSound = makeSfx(
+      [
+        { freq: 260, start: 0, dur: 0.08 },
+        { freq: 390, start: 0.045, dur: 0.11 },
+      ],
+      "square",
+    );
     const deathSound = makeSfx(
       [
         { freq: 200, start: 0, dur: 0.18 },
@@ -130,6 +142,7 @@ export default function JumpGame() {
       "triangle",
     );
     const baseVolumes = new Map<Sfx, number>([
+      [jumpSound, 0.18],
       [deathSound, 0.4],
       [xpSound, 0.3],
       [levelUpSound, 0.35],
@@ -516,11 +529,15 @@ export default function JumpGame() {
         jumping = true;
         jumpCount++;
         rotationTarget += 90;
+        jumpSound.currentTime = 0;
+        jumpSound.play().catch(() => {});
       } else if (airJumpsUsed < 1 && challengeMode) {
         velocity = jumpPower;
         airJumpsUsed++;
         jumpCount++;
         rotationTarget += 90;
+        jumpSound.currentTime = 0;
+        jumpSound.play().catch(() => {});
       }
     }
 
