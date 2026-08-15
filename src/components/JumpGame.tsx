@@ -1234,13 +1234,14 @@ export default function JumpGame() {
       for (const s of level.spikes) {
         const screenX = s.x - x;
         if (screenX < -50 || screenX > 850) continue;
-        if (s.tall) {
-          ctx.fillStyle = "orange";
-          ctx.fillRect(screenX, 210, 20, 40);
-        } else {
-          ctx.fillStyle = "red";
-          ctx.fillRect(screenX, 230, 20, 20);
-        }
+        const h = s.tall ? 40 : 20;
+        ctx.fillStyle = s.tall ? "orange" : "red";
+        ctx.beginPath();
+        ctx.moveTo(screenX, 250);
+        ctx.lineTo(screenX + 20, 250);
+        ctx.lineTo(screenX + 10, 250 - h);
+        ctx.closePath();
+        ctx.fill();
       }
 
       ctx.fillStyle = "yellow";
