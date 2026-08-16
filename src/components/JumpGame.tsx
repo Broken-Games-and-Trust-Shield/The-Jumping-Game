@@ -26,7 +26,8 @@ type Screen =
   | "hotkeys"
   | "about"
   | "characterSelect"
-  | "outlineSelect";
+  | "outlineSelect"
+  | "controls";
 
 type HotkeyAction = "jump" | "pause" | "mute";
 
@@ -195,6 +196,9 @@ export default function JumpGame() {
 
     let screen: Screen = "menu";
     let returnScreen: "menu" | "paused" = "menu";
+    let controlsReturn: "menu" | "paused" = "menu";
+    let controlsScroll = 0;
+    let draggingControlsBar = false;
 
     const characters: Character[] = [
       { name: "Blue", color: "cyan" },
@@ -264,16 +268,22 @@ export default function JumpGame() {
     const challengeBtn = { x: 200, y: 128, width: 400, height: 28 };
 
     // Main menu buttons (canvas 800x300)
-    const menuPlayBtn = { x: 250, y: 70, width: 300, height: 38 };
-    const menuSettingsBtn = { x: 250, y: 115, width: 300, height: 38 };
-    const menuAboutBtn = { x: 250, y: 160, width: 300, height: 38 };
-    const menuCharBtn = { x: 250, y: 205, width: 300, height: 38 };
+    const menuPlayBtn = { x: 250, y: 62, width: 300, height: 32 };
+    const menuSettingsBtn = { x: 250, y: 100, width: 300, height: 32 };
+    const menuControlsBtn = { x: 250, y: 138, width: 300, height: 32 };
+    const menuAboutBtn = { x: 250, y: 176, width: 300, height: 32 };
+    const menuCharBtn = { x: 250, y: 214, width: 300, height: 32 };
 
     // Pause menu buttons
-    const resumeBtn = { x: 250, y: 70, width: 300, height: 38 };
-    const pauseMainMenuBtn = { x: 250, y: 115, width: 300, height: 38 };
-    const pauseCharBtn = { x: 250, y: 160, width: 300, height: 38 };
-    const pauseSettingsBtn = { x: 250, y: 205, width: 300, height: 38 };
+    const resumeBtn = { x: 250, y: 62, width: 300, height: 32 };
+    const pauseMainMenuBtn = { x: 250, y: 100, width: 300, height: 32 };
+    const pauseControlsBtn = { x: 250, y: 138, width: 300, height: 32 };
+    const pauseCharBtn = { x: 250, y: 176, width: 300, height: 32 };
+    const pauseSettingsBtn = { x: 250, y: 214, width: 300, height: 32 };
+
+    // Game controls screen (scrollable list)
+    const controlsView = { x: 60, y: 70, width: 680, height: 175 };
+    const controlsBar = { x: 745, y: 70, width: 10, height: 175 };
 
     // Back button for settings / about / char / outline
     const backBtn = { x: 20, y: 250, width: 110, height: 32 };
@@ -558,6 +568,10 @@ export default function JumpGame() {
         return;
       }
 
+      if (e.code === "Space" || e.code === "ArrowDown" || e.code === "ArrowUp") {
+        e.preventDefault();
+      }
+
       // Pause / resume
       if (e.code === hotkeys.pause) {
         if (screen === "playing") {
@@ -613,6 +627,12 @@ export default function JumpGame() {
           screen = "settings";
           return;
         }
+        if (hit(clickX, clickY, menuControlsBtn)) {
+          controlsReturn = "menu";
+          controlsScroll = 0;
+          screen = "controls";
+          return;
+        }
         if (hit(clickX, clickY, menuAboutBtn)) {
           screen = "about";
           return;
@@ -629,6 +649,13 @@ export default function JumpGame() {
       if (screen === "about") {
         if (hit(clickX, clickY, backBtn)) {
           screen = "menu";
+        }
+        return;
+      }
+
+      if (screen === "controls") {
+        if (hit(clickX, clickY, backBtn)) {
+          screen = controlsReturn;
         }
         return;
       }
@@ -716,6 +743,12 @@ export default function JumpGame() {
         }
         if (hit(clickX, clickY, pauseMainMenuBtn)) {
           goToMainMenu();
+          return;
+        }
+        if (hit(clickX, clickY, pauseControlsBtn)) {
+          controlsReturn = "paused";
+          controlsScroll = 0;
+          screen = "controls";
           return;
         }
         if (hit(clickX, clickY, pauseCharBtn)) {
@@ -826,6 +859,41 @@ export default function JumpGame() {
     const handleMouseUp = () => {
       draggingVolume = false;
     };
+    const handleWheel = (e: WheelEvent) => {
+      if (screen !== "controls") return;
+      e.preventDefault();
+      controlsScroll += e.deltaY;
+    };
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    const setControlsScrollFromY = (my: number) => {
+      const content = controlsContentHeight();
+      const maxScroll = Math.max(0, content - controlsView.height);
+      const ratio = Math.min(1, controlsView.height / content);
+      const thumbH = Math.max(24, controlsBar.height * ratio);
+      const t = (my - controlsBar.y - thumbH / 2) / Math.max(1, controlsBar.height - thumbH);
+      controlsScroll = Math.max(0, Math.min(maxScroll, t * maxScroll));
+    };
+    const handleControlsDown = (e: MouseEvent) => {
+      if (screen !== "controls") return;
+      const { x: mx, y: my } = canvasCoords(e);
+      if (mx >= controlsBar.x - 8 && mx <= controlsBar.x + controlsBar.width + 8 && my >= controlsBar.y && my <= controlsBar.y + controlsBar.height) {
+        draggingControlsBar = true;
+        setControlsScrollFromY(my);
+      }
+    };
+    const handleControlsMove = (e: MouseEvent) => {
+      if (!draggingControlsBar) return;
+      const { y: my } = canvasCoords(e);
+      setControlsScrollFromY(my);
+    };
+    const handleControlsUp = () => {
+      draggingControlsBar = false;
+    };
+    canvas.addEventListener("mousedown", handleControlsDown);
+    window.addEventListener("mousemove", handleControlsMove);
+    window.addEventListener("mouseup", handleControlsUp);
+
     canvas.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -878,10 +946,11 @@ export default function JumpGame() {
       ctx.textAlign = "center";
       ctx.fillText("The Jumping Game", 400, 45);
       ctx.textAlign = "left";
-      drawButton(menuPlayBtn, "Play", 20);
-      drawButton(menuSettingsBtn, "Settings", 20);
-      drawButton(menuAboutBtn, "About the Creator", 20);
-      drawButton(menuCharBtn, "Character Customization", 20);
+      drawButton(menuPlayBtn, "Play", 18);
+      drawButton(menuSettingsBtn, "Settings", 18);
+      drawButton(menuControlsBtn, "Game Controls", 18);
+      drawButton(menuAboutBtn, "About the Creator", 18);
+      drawButton(menuCharBtn, "Character Customization", 18);
     }
 
     function drawSettings() {
@@ -1083,6 +1152,90 @@ export default function JumpGame() {
       drawButton(backBtn, "Back", 16);
     }
 
+    function controlLines(): { text: string; bold?: boolean }[] {
+      return [
+        { text: "Movement", bold: true },
+        { text: `Jump — ${prettyKey(hotkeys.jump)} or click the game area` },
+        { text: "Double jump — press jump again in mid-air (challenge mode)" },
+        { text: "Each jump spins your character 90° to the right." },
+        { text: "" },
+        { text: "Game", bold: true },
+        { text: `Pause / Resume — ${prettyKey(hotkeys.pause)} or the ⏸️ button` },
+        { text: `Mute / Unmute — ${prettyKey(hotkeys.mute)} or the speaker button` },
+        { text: "Restart after death — click anywhere" },
+        { text: "Continue after a win — click anywhere" },
+        { text: "" },
+        { text: "Menus", bold: true },
+        { text: "Play — starts at level 1" },
+        { text: "Settings — volume slider and hotkey setup" },
+        { text: "Character Customization — colour and outline" },
+        { text: "Hotkeys can be rebound to letters, numbers, Space or Esc." },
+        { text: "Reset to Defaults restores Space / Esc / M." },
+        { text: "" },
+        { text: "Tips", bold: true },
+        { text: "Jump late on tall orange spikes for extra clearance." },
+        { text: "Fewer deaths = better score; best runs are saved." },
+      ];
+    }
+
+    function controlsContentHeight() {
+      return controlLines().length * 22 + 10;
+    }
+
+    function drawControls() {
+      if (!ctx || !canvas) return;
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#f5c518";
+      ctx.font = "bold 26px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Game Controls", 400, 40);
+      ctx.textAlign = "left";
+
+      const lines = controlLines();
+      const content = controlsContentHeight();
+      const maxScroll = Math.max(0, content - controlsView.height);
+      if (controlsScroll > maxScroll) controlsScroll = maxScroll;
+      if (controlsScroll < 0) controlsScroll = 0;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(controlsView.x, controlsView.y, controlsView.width, controlsView.height);
+      ctx.clip();
+      let y = controlsView.y + 18 - controlsScroll;
+      for (const line of lines) {
+        if (line.bold) {
+          ctx.fillStyle = "#f5c518";
+          ctx.font = "bold 16px Arial";
+        } else {
+          ctx.fillStyle = "#e6e6e6";
+          ctx.font = "14px Arial";
+        }
+        ctx.fillText(line.text, controlsView.x + 6, y);
+        y += 22;
+      }
+      ctx.restore();
+
+      // Scrollbar
+      ctx.fillStyle = "#3a3a3a";
+      ctx.fillRect(controlsBar.x, controlsBar.y, controlsBar.width, controlsBar.height);
+      const ratio = Math.min(1, controlsView.height / content);
+      const thumbH = Math.max(24, controlsBar.height * ratio);
+      const thumbY =
+        controlsBar.y +
+        (maxScroll === 0 ? 0 : (controlsScroll / maxScroll) * (controlsBar.height - thumbH));
+      ctx.fillStyle = "#f5c518";
+      ctx.fillRect(controlsBar.x, thumbY, controlsBar.width, thumbH);
+
+      ctx.fillStyle = "#999";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText("Scroll or drag the bar", 740, 262);
+      ctx.textAlign = "left";
+
+      drawButton(backBtn, "Back", 16);
+    }
+
     function drawPauseMenu() {
       if (!ctx || !canvas) return;
       ctx.fillStyle = "#555";
@@ -1092,10 +1245,11 @@ export default function JumpGame() {
       ctx.textAlign = "center";
       ctx.fillText("Game Paused", 400, 55);
       ctx.textAlign = "left";
-      drawButton(resumeBtn, "Resume Game", 20);
-      drawButton(pauseMainMenuBtn, "Main Menu", 20);
-      drawButton(pauseCharBtn, "Character Customization", 20);
-      drawButton(pauseSettingsBtn, "Settings", 20);
+      drawButton(resumeBtn, "Resume Game", 18);
+      drawButton(pauseMainMenuBtn, "Main Menu", 18);
+      drawButton(pauseControlsBtn, "Game Controls", 18);
+      drawButton(pauseCharBtn, "Character Customization", 18);
+      drawButton(pauseSettingsBtn, "Settings", 18);
     }
 
     function loop() {
@@ -1114,6 +1268,11 @@ export default function JumpGame() {
       }
       if (screen === "hotkeys") {
         drawHotkeys();
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+      if (screen === "controls") {
+        drawControls();
         animationFrameId = requestAnimationFrame(loop);
         return;
       }
@@ -1361,6 +1520,10 @@ export default function JumpGame() {
       window.removeEventListener("keydown", handleKeyDown);
       canvas.removeEventListener("click", handleClick);
       canvas.removeEventListener("mousedown", handleMouseDown);
+      canvas.removeEventListener("wheel", handleWheel);
+      canvas.removeEventListener("mousedown", handleControlsDown);
+      window.removeEventListener("mousemove", handleControlsMove);
+      window.removeEventListener("mouseup", handleControlsUp);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("pointerdown", unlockAudio);
@@ -1396,11 +1559,7 @@ export default function JumpGame() {
         aria-label="Jump Master game screen. Use Space to jump, Escape to pause, and M to mute."
         style={{ background: "#111" }}
       />
-      <p className="mt-4 text-sm opacity-70">
-        Press SPACE or click to jump — ESC or ⏸️ to pause.
-      </p>
-
-      <section className="mt-8 max-w-2xl px-4 pb-12 text-sm leading-relaxed opacity-90">
+      <section className="sr-only">
         <h2 className="text-lg mb-2">How to play Jump Master</h2>
         <p className="mb-4">
           Jump Master is a free browser platformer. You control a square runner that
