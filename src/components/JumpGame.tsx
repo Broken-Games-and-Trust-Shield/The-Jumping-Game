@@ -1537,7 +1537,7 @@ export default function JumpGame() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-      <h1 className="text-2xl mb-2">Jump Master: Side-Scrolling Platformer</h1>
+      <h1 className="text-2xl mb-2">The Jumping Game</h1>
       <button
         onClick={() => window.resetBestScores?.()}
         aria-label="Reset saved best scores and start over"
