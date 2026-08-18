@@ -221,8 +221,15 @@ export default function JumpGame() {
     let previewCharIndex = charIndex;
 
     // Volume slider geometry on settings screen
-    const volSlider = { x: 150, y: 150, width: 500, height: 10 };
+    const volSlider = { x: 150, y: 120, width: 500, height: 10 };
     let draggingVolume = false;
+
+    // Game background choice
+    const bgKey = "jump_game_background";
+    let bgChoice: "black" | "white" =
+      localStorage.getItem(bgKey) === "white" ? "white" : "black";
+    const bgBlackBtn = { x: 250, y: 200, width: 145, height: 30 };
+    const bgWhiteBtn = { x: 405, y: 200, width: 145, height: 30 };
 
     // Hotkey config
     const hotkeyKey = "jump_game_hotkeys";
@@ -244,18 +251,26 @@ export default function JumpGame() {
       { action: "pause", label: "Pause", box: { x: 300, y: 130, width: 200, height: 34 } },
       { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
     ];
-    const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+    const hotkeySetupBtn = { x: 250, y: 245, width: 300, height: 34 };
     const resetHotkeysBtn = { x: 250, y: 245, width: 300, height: 34 };
 
     function prettyKey(code: string) {
       if (code === "Space") return "Space";
       if (code === "Escape") return "Esc";
+      if (code === "ArrowUp") return "↑ Up";
+      if (code === "ArrowDown") return "↓ Down";
+      if (code === "ArrowLeft") return "← Left";
+      if (code === "ArrowRight") return "→ Right";
       if (code.startsWith("Key")) return code.slice(3);
       if (code.startsWith("Digit")) return code.slice(5);
       return code;
     }
     function isAllowedHotkey(code: string) {
       return (
+        code === "ArrowUp" ||
+        code === "ArrowDown" ||
+        code === "ArrowLeft" ||
+        code === "ArrowRight" ||
         code === "Space" ||
         code === "Escape" ||
         /^Key[A-Z]$/.test(code) ||
@@ -670,6 +685,16 @@ export default function JumpGame() {
           screen = "hotkeys";
           return;
         }
+        if (hit(clickX, clickY, bgBlackBtn)) {
+          bgChoice = "black";
+          localStorage.setItem(bgKey, bgChoice);
+          return;
+        }
+        if (hit(clickX, clickY, bgWhiteBtn)) {
+          bgChoice = "white";
+          localStorage.setItem(bgKey, bgChoice);
+          return;
+        }
         return;
       }
 
@@ -965,7 +990,7 @@ export default function JumpGame() {
 
       ctx.fillStyle = "#fff";
       ctx.font = "bold 18px Arial";
-      ctx.fillText("Sound Volume", 400, 100);
+      ctx.fillText("Sound Volume", 400, 80);
 
       // Track
       ctx.fillStyle = "#555";
@@ -997,10 +1022,32 @@ export default function JumpGame() {
       ctx.fillText(
         volume === 0 ? "Muted" : `${Math.round(volume * 100)}%`,
         400,
-        200,
+        160,
       );
 
+      // Background choice
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("Game Background", 400, 192);
+
       ctx.textAlign = "left";
+      for (const [btn, label, val] of [
+        [bgBlackBtn, "Black", "black"],
+        [bgWhiteBtn, "White", "white"],
+      ] as const) {
+        const active = bgChoice === val;
+        ctx.fillStyle = active ? "#f5c518" : "#444";
+        ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(btn.x, btn.y, btn.width, btn.height);
+        ctx.fillStyle = active ? "#000" : "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6);
+        ctx.textAlign = "left";
+      }
+
       drawButton(hotkeySetupBtn, "Hotkey Setup", 18);
       drawButton(backBtn, "Back", 18);
     }
@@ -1018,7 +1065,7 @@ export default function JumpGame() {
       ctx.fillStyle = "#ccc";
       ctx.fillText(
         waitingForHotkey
-          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, Space, Esc)`
+          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, arrows, Space, Esc)`
           : "Click an action, then press a key to bind it.",
         400,
         62,
@@ -1169,7 +1216,7 @@ export default function JumpGame() {
         { text: "Play — starts at level 1" },
         { text: "Settings — volume slider and hotkey setup" },
         { text: "Character Customization — colour and outline" },
-        { text: "Hotkeys can be rebound to letters, numbers, Space or Esc." },
+        { text: "Hotkeys can be rebound to letters, numbers, arrow keys, Space or Esc." },
         { text: "Reset to Defaults restores Space / Esc / M." },
         { text: "" },
         { text: "Tips", bold: true },
@@ -1374,8 +1421,12 @@ export default function JumpGame() {
         }
       }
 
-      ctx.fillStyle = "white";
+      // Game background + floor (floor contrasts with background)
+      ctx.fillStyle = bgChoice === "white" ? "#ffffff" : "#111111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = bgChoice === "white" ? "#111111" : "#ffffff";
       ctx.fillRect(0, 250, 800, 5);
+      const hudFg = bgChoice === "white" ? "#111111" : "#ffffff";
 
       ctx.save();
       ctx.translate(109, 239 - playerY);
@@ -1403,7 +1454,7 @@ export default function JumpGame() {
         ctx.fill();
       }
 
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = bgChoice === "white" ? "#8a6d00" : "yellow";
       ctx.font = "bold 20px Arial";
       const levelLabel = challengeMode
         ? `Challenge ${levelIndex - 4} | Speed ${level.speed}`
@@ -1437,13 +1488,13 @@ export default function JumpGame() {
       }
 
       if (!gameComplete && won) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏁 Level Complete - Click next", 250, 120);
       }
 
       if (dead) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("💀 Dead - Click to retry", 280, 120);
       }
@@ -1452,7 +1503,7 @@ export default function JumpGame() {
         ctx.fillStyle = "gold";
         ctx.font = "bold 22px Arial";
         ctx.fillText("👑 CHALLENGE COMPLETE!", 210, 90);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 18px Arial";
         ctx.fillText(`CHALLENGE SCORE: ${currentDeaths}`, 270, 118);
         ctx.fillText(
@@ -1462,7 +1513,7 @@ export default function JumpGame() {
         );
         ctx.fillText("Click to play again", 300, 172);
       } else if (gameComplete && challengeOffered) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏆 GAME COMPLETE", 270, 78);
         ctx.font = "16px Arial";
@@ -1495,7 +1546,7 @@ export default function JumpGame() {
         ctx.font = "13px Arial";
         ctx.fillText("(click outside the box to play again)", 270, 175);
       } else if (gameComplete) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏆 GAME COMPLETE", 270, 100);
         ctx.fillText(`FINAL SCORE: ${currentDeaths}`, 290, 128);
