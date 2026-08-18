@@ -221,8 +221,15 @@ export default function JumpGame() {
     let previewCharIndex = charIndex;
 
     // Volume slider geometry on settings screen
-    const volSlider = { x: 150, y: 150, width: 500, height: 10 };
+    const volSlider = { x: 150, y: 120, width: 500, height: 10 };
     let draggingVolume = false;
+
+    // Game background choice
+    const bgKey = "jump_game_background";
+    let bgChoice: "black" | "white" =
+      localStorage.getItem(bgKey) === "white" ? "white" : "black";
+    const bgBlackBtn = { x: 250, y: 200, width: 145, height: 30 };
+    const bgWhiteBtn = { x: 405, y: 200, width: 145, height: 30 };
 
     // Hotkey config
     const hotkeyKey = "jump_game_hotkeys";
