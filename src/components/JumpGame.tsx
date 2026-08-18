@@ -685,6 +685,16 @@ export default function JumpGame() {
           screen = "hotkeys";
           return;
         }
+        if (hit(clickX, clickY, bgBlackBtn)) {
+          bgChoice = "black";
+          localStorage.setItem(bgKey, bgChoice);
+          return;
+        }
+        if (hit(clickX, clickY, bgWhiteBtn)) {
+          bgChoice = "white";
+          localStorage.setItem(bgKey, bgChoice);
+          return;
+        }
         return;
       }
 
