@@ -1065,7 +1065,7 @@ export default function JumpGame() {
       ctx.fillStyle = "#ccc";
       ctx.fillText(
         waitingForHotkey
-          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, Space, Esc)`
+          ? `Press a key to set "${waitingForHotkey}" (letters, numbers, arrows, Space, Esc)`
           : "Click an action, then press a key to bind it.",
         400,
         62,
@@ -1216,7 +1216,7 @@ export default function JumpGame() {
         { text: "Play — starts at level 1" },
         { text: "Settings — volume slider and hotkey setup" },
         { text: "Character Customization — colour and outline" },
-        { text: "Hotkeys can be rebound to letters, numbers, Space or Esc." },
+        { text: "Hotkeys can be rebound to letters, numbers, arrow keys, Space or Esc." },
         { text: "Reset to Defaults restores Space / Esc / M." },
         { text: "" },
         { text: "Tips", bold: true },
