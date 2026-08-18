@@ -1421,7 +1421,10 @@ export default function JumpGame() {
         }
       }
 
-      ctx.fillStyle = "white";
+      // Game background + floor (floor contrasts with background)
+      ctx.fillStyle = bgChoice === "white" ? "#ffffff" : "#111111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = bgChoice === "white" ? "#111111" : "#ffffff";
       ctx.fillRect(0, 250, 800, 5);
 
       ctx.save();
