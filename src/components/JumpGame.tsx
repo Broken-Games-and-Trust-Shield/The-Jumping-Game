@@ -1426,6 +1426,7 @@ export default function JumpGame() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = bgChoice === "white" ? "#111111" : "#ffffff";
       ctx.fillRect(0, 250, 800, 5);
+      const hudFg = bgChoice === "white" ? "#111111" : "#ffffff";
 
       ctx.save();
       ctx.translate(109, 239 - playerY);
@@ -1487,13 +1488,13 @@ export default function JumpGame() {
       }
 
       if (!gameComplete && won) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏁 Level Complete - Click next", 250, 120);
       }
 
       if (dead) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("💀 Dead - Click to retry", 280, 120);
       }
@@ -1502,7 +1503,7 @@ export default function JumpGame() {
         ctx.fillStyle = "gold";
         ctx.font = "bold 22px Arial";
         ctx.fillText("👑 CHALLENGE COMPLETE!", 210, 90);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 18px Arial";
         ctx.fillText(`CHALLENGE SCORE: ${currentDeaths}`, 270, 118);
         ctx.fillText(
@@ -1512,7 +1513,7 @@ export default function JumpGame() {
         );
         ctx.fillText("Click to play again", 300, 172);
       } else if (gameComplete && challengeOffered) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏆 GAME COMPLETE", 270, 78);
         ctx.font = "16px Arial";
@@ -1545,7 +1546,7 @@ export default function JumpGame() {
         ctx.font = "13px Arial";
         ctx.fillText("(click outside the box to play again)", 270, 175);
       } else if (gameComplete) {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = hudFg;
         ctx.font = "bold 20px Arial";
         ctx.fillText("🏆 GAME COMPLETE", 270, 100);
         ctx.fillText(`FINAL SCORE: ${currentDeaths}`, 290, 128);
