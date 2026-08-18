@@ -990,7 +990,7 @@ export default function JumpGame() {
 
       ctx.fillStyle = "#fff";
       ctx.font = "bold 18px Arial";
-      ctx.fillText("Sound Volume", 400, 100);
+      ctx.fillText("Sound Volume", 400, 80);
 
       // Track
       ctx.fillStyle = "#555";
@@ -1022,10 +1022,32 @@ export default function JumpGame() {
       ctx.fillText(
         volume === 0 ? "Muted" : `${Math.round(volume * 100)}%`,
         400,
-        200,
+        160,
       );
 
+      // Background choice
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("Game Background", 400, 192);
+
       ctx.textAlign = "left";
+      for (const [btn, label, val] of [
+        [bgBlackBtn, "Black", "black"],
+        [bgWhiteBtn, "White", "white"],
+      ] as const) {
+        const active = bgChoice === val;
+        ctx.fillStyle = active ? "#f5c518" : "#444";
+        ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(btn.x, btn.y, btn.width, btn.height);
+        ctx.fillStyle = active ? "#000" : "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6);
+        ctx.textAlign = "left";
+      }
+
       drawButton(hotkeySetupBtn, "Hotkey Setup", 18);
       drawButton(backBtn, "Back", 18);
     }
