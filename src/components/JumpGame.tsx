@@ -251,18 +251,26 @@ export default function JumpGame() {
       { action: "pause", label: "Pause", box: { x: 300, y: 130, width: 200, height: 34 } },
       { action: "mute", label: "Mute", box: { x: 300, y: 180, width: 200, height: 34 } },
     ];
-    const hotkeySetupBtn = { x: 250, y: 220, width: 300, height: 34 };
+    const hotkeySetupBtn = { x: 250, y: 245, width: 300, height: 34 };
     const resetHotkeysBtn = { x: 250, y: 245, width: 300, height: 34 };
 
     function prettyKey(code: string) {
       if (code === "Space") return "Space";
       if (code === "Escape") return "Esc";
+      if (code === "ArrowUp") return "↑ Up";
+      if (code === "ArrowDown") return "↓ Down";
+      if (code === "ArrowLeft") return "← Left";
+      if (code === "ArrowRight") return "→ Right";
       if (code.startsWith("Key")) return code.slice(3);
       if (code.startsWith("Digit")) return code.slice(5);
       return code;
     }
     function isAllowedHotkey(code: string) {
       return (
+        code === "ArrowUp" ||
+        code === "ArrowDown" ||
+        code === "ArrowLeft" ||
+        code === "ArrowRight" ||
         code === "Space" ||
         code === "Escape" ||
         /^Key[A-Z]$/.test(code) ||
