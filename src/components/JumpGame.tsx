@@ -1453,7 +1453,7 @@ export default function JumpGame() {
         ctx.fill();
       }
 
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = bgChoice === "white" ? "#8a6d00" : "yellow";
       ctx.font = "bold 20px Arial";
       const levelLabel = challengeMode
         ? `Challenge ${levelIndex - 4} | Speed ${level.speed}`
