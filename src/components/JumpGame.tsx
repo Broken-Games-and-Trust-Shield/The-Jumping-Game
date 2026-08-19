@@ -1364,23 +1364,24 @@ export default function JumpGame() {
           rotation += (rotationTarget - rotation) * 0.18;
         }
 
-        function pointInTriangle(
-          px: number,
-          py: number,
-          ax: number,
-          ay: number,
-          bx: number,
-          by: number,
-          cx: number,
-          cy: number,
-        ) {
-          const denom = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
-          const a =
-            ((by - cy) * (px - cx) + (cx - bx) * (py - cy)) / denom;
-          const b =
-            ((cy - ay) * (px - cx) + (ax - cx) * (py - cy)) / denom;
-          const c = 1 - a - b;
-          return a >= 0 && b >= 0 && c >= 0;
+        function spikeHitsPlayer(screenX: number, h: number) {
+          const playerBottomY = 248 - playerY;
+          const apexY = 250 - h;
+          // Player has jumped completely above the spike
+          if (playerBottomY < apexY) return false;
+          // Player is below the spike base (on the ground)
+          if (playerBottomY > 250) return false;
+
+          // Triangle width grows linearly from 0 at the apex to 20 at the base
+          const progress = (playerBottomY - apexY) / h;
+          const halfWidth = 10 * progress;
+          const spikeLeft = screenX + 10 - halfWidth;
+          const spikeRight = screenX + 10 + halfWidth;
+
+          // Player's bottom edge spans from x=100 to x=118
+          const playerLeft = 100;
+          const playerRight = 118;
+          return playerRight >= spikeLeft && playerLeft <= spikeRight;
         }
 
         for (const s of level.spikes) {
@@ -1388,21 +1389,7 @@ export default function JumpGame() {
           if (screenX < -50 || screenX > 200) continue;
 
           const h = s.tall ? 40 : 20;
-          const px = 109;
-          const py = 248 - playerY;
-          if (
-            pointInTriangle(
-              px,
-              py,
-              screenX,
-              250,
-              screenX + 20,
-              250,
-              screenX + 10,
-              250 - h,
-            ) &&
-            !dead
-          ) {
+          if (spikeHitsPlayer(screenX, h) && !dead) {
             dead = true;
             currentDeaths++;
             deathSound.currentTime = 0;
