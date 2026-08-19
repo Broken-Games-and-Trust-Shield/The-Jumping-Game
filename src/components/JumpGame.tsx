@@ -1388,21 +1388,65 @@ export default function JumpGame() {
           if (screenX < -50 || screenX > 200) continue;
 
           const h = s.tall ? 40 : 20;
+
+          // Triangle vertices
+          const tx1 = screenX;
+          const ty1 = 250;
+          const tx2 = screenX + 20;
+          const ty2 = 250;
+          const tx3 = screenX + 10;
+          const ty3 = 250 - h;
+
+          // Player AABB (covers the whole 18x18 square)
           const px = 109;
-          const py = 248 - playerY;
-          if (
-            pointInTriangle(
-              px,
-              py,
-              screenX,
-              250,
-              screenX + 20,
-              250,
-              screenX + 10,
-              250 - h,
-            ) &&
-            !dead
-          ) {
+          const py = 239 - playerY;
+          const playerHalf = 9;
+          const pLeft = px - playerHalf;
+          const pRight = px + playerHalf;
+          const pTop = py - playerHalf;
+          const pBottom = py + playerHalf;
+
+          // Check several points around the player so the triangle hitbox matches the visuals
+          const playerPoints = [
+            { x: px, y: pBottom }, // bottom center
+            { x: pLeft, y: pBottom }, // bottom left
+            { x: pRight, y: pBottom }, // bottom right
+            { x: pLeft, y: py }, // left middle
+            { x: pRight, y: py }, // right middle
+            { x: px, y: pTop }, // top center
+            { x: pLeft, y: pTop }, // top left
+            { x: pRight, y: pTop }, // top right
+          ];
+
+          let hitSpike = false;
+          for (const p of playerPoints) {
+            if (pointInTriangle(p.x, p.y, tx1, ty1, tx2, ty2, tx3, ty3)) {
+              hitSpike = true;
+              break;
+            }
+          }
+
+          // Also check if any triangle vertex is inside the player box
+          if (!hitSpike) {
+            const trianglePoints = [
+              { x: tx1, y: ty1 },
+              { x: tx2, y: ty2 },
+              { x: tx3, y: ty3 },
+            ];
+            for (const t of trianglePoints) {
+              if (
+                t.x >= pLeft &&
+                t.x <= pRight &&
+                t.y >= pTop &&
+                t.y <= pBottom
+              ) {
+                hitSpike = true;
+                break;
+              }
+            }
+          }
+
+          if (hitSpike && !dead) {
             dead = true;
             currentDeaths++;
             deathSound.currentTime = 0;
